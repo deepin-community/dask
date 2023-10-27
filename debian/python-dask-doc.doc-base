@@ -1,0 +1,11 @@
+Document: python-dask-doc
+Title: Dask documentation
+Author: Continuum Analytics
+Abstract: Distributed computation documentation
+Section: Programming/Python
+
+Format: HTML
+Index: /usr/share/doc/python-dask-doc/html/index.html
+Files: /usr/share/doc/python-dask-doc/html/*.html
+ /usr/share/doc/python-dask-doc/html/examples/*.html
+

@@ -1,0 +1,16 @@
+
+#!/bin/bash 
+set -e
+
+# skip test_development_guidelines_matches_ci because
+# we're installed, so the path doesn't match development
+SKIP_TESTS=test_development_guidelines_matches_ci
+# failed to raise a warning.
+SKIP_TESTS="$SKIP_TESTS or test_RandomState_only_funcs"
+
+cp conftest.py "$AUTOPKGTEST_TMP"
+for py in $(py3versions --supported 2>/dev/null)
+do cd "$AUTOPKGTEST_TMP"
+  echo "Testing with $py:"
+  http_proxy= $py -m pytest -k "not ( ${SKIP_TESTS} )" -m "not network" -v --pyargs dask
+done

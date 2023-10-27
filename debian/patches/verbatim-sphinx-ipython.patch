@@ -1,0 +1,23 @@
+Author: Diane Trout <diane@ghic.org>
+Description: Running the example documentation code makes
+ documentation building non-reproducible
+Forward: no
+
+--- a/docs/source/shared.rst
++++ b/docs/source/shared.rst
+@@ -51,6 +51,7 @@
+ The quickest/simplest test we can do it to use IPython's ``timeit`` magic:
+ 
+ .. ipython::
++   :verbatim:
+ 
+    In [1]: import dask.array as da
+ 
+@@ -65,6 +66,7 @@
+ So this takes ~90 microseconds per task.  About 100ms of this is from overhead:
+ 
+ .. ipython::
++   :verbatim:
+ 
+    In [5]: x = da.ones(1000, chunks=(1000,)).sum()
+    

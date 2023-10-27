@@ -1,0 +1,134 @@
+Description: Don't tryy to use Sphinx extensions we don't have
+
+sphinx_autosummary_accessors, sphinx_design are not packaged;
+jupyter_sphinx is but probably doesn't work.
+
+Author: Andreas Tille <tille@debian.org>, Rebecca N. Palmer
+Last-Update: Fri, 13 Jan 2023 11:20:28 +0100
+
+--- a/docs/requirements-docs.txt
++++ b/docs/requirements-docs.txt
+@@ -4,14 +4,11 @@
+ sphinx-click
+ sphinx-copybutton
+ sphinx-remove-toctrees
+-sphinx_autosummary_accessors
+ sphinx-tabs
+ sphinx-design
+-jupyter_sphinx
+ toolz
+ cloudpickle>=1.5.0
+ pandas>=1.4.0
+-git+https://github.com/dask/distributed
+ fsspec
+ scipy
+ pytest
+--- a/docs/source/conf.py
++++ b/docs/source/conf.py
+@@ -18,7 +18,7 @@
+ # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+ import sys
+ 
+-import sphinx_autosummary_accessors
++# import sphinx_autosummary_accessors
+ 
+ # -- General configuration -----------------------------------------------------
+ 
+@@ -37,7 +37,7 @@
+     "sphinx.ext.mathjax",
+     "sphinx.ext.intersphinx",
+     "sphinx.ext.autosummary",
+-    "sphinx_autosummary_accessors",
++#    "sphinx_autosummary_accessors",
+     "sphinx.ext.extlinks",
+     "sphinx.ext.viewcode",
+     "numpydoc",
+@@ -47,9 +47,9 @@
+     "sphinx_remove_toctrees",
+     "IPython.sphinxext.ipython_console_highlighting",
+     "IPython.sphinxext.ipython_directive",
+-    "jupyter_sphinx",
++#    "jupyter_sphinx",
+     "sphinx_copybutton",
+-    "sphinx_design",
++#    "sphinx_design",
+ ]
+ 
+ copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+@@ -66,7 +66,7 @@
+ mathjax_path = 'file:///usr/share/javascript/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+ 
+ # Add any paths that contain templates here, relative to this directory.
+-templates_path = ["_templates", sphinx_autosummary_accessors.templates_path]
++#templates_path = ["_templates", sphinx_autosummary_accessors.templates_path]
+ 
+ # The suffix of source filenames.
+ source_suffix = ".rst"
+--- a/docs/source/10-minutes-to-dask.rst
++++ b/docs/source/10-minutes-to-dask.rst
+@@ -88,7 +88,7 @@
+ 
+       See :doc:`array`.
+ 
+-      .. jupyter-execute::
++      .. code-block:: python
+ 
+          import numpy as np
+          import dask.array as da
+@@ -102,12 +102,12 @@
+ 
+       Here are some key properties of a Dask Array:
+ 
+-      .. jupyter-execute::
++      .. code-block:: python
+ 
+          # inspect the chunks
+          a.chunks
+ 
+-      .. jupyter-execute::        
++      .. code-block:: python
+             
+          # access a particular block of data
+          a.blocks[1, 3]
+@@ -158,7 +158,7 @@
+ 
+    .. group-tab:: Array
+ 
+-    .. jupyter-execute::
++    .. code-block:: python
+ 
+        a[:50, 200]
+ 
+--- a/docs/source/dataframe.rst
++++ b/docs/source/dataframe.rst
+@@ -62,9 +62,7 @@
+ subset of the ``pd.DataFrame`` API, it should be familiar to pandas users.
+ There are some slight alterations due to the parallel nature of Dask:
+ 
+-.. grid:: 2
+-
+-    .. grid-item-card:: Dask DataFrame API
++Dask DataFrame API
+ 
+         .. code-block:: python
+ 
+@@ -85,7 +83,7 @@
+             3    5
+             Name: x, dtype: int64
+ 
+-    .. grid-item-card:: pandas DataFrame API
++pandas DataFrame API
+ 
+         .. code-block:: python
+ 
+--- a/docs/source/scheduling.rst
++++ b/docs/source/scheduling.rst
+@@ -244,7 +244,7 @@
+ This import initialization can lead to subprocesses recursively creating other subprocesses
+ and eventually an error is raised.
+ 
+-.. dropdown:: Common error encountered
++Common error encountered
+ 
+    .. code-block:: python
+ 

@@ -1,0 +1,4 @@
+#!/bin/sh
+wget -q -N https://raw.githubusercontent.com/jeremyfa/yaml.js/develop/dist/yaml.js
+yui-compressor yaml.js > yaml.min.js
+wget -q -N https://raw.githubusercontent.com/jeremyfa/yaml.js/develop/LICENSE

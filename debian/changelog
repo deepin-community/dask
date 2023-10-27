@@ -1,5 +1,380 @@
-template-repository (1.0-1) unstable; urgency=medium
+dask (2023.8.0+dfsg-2) unstable; urgency=medium
 
-  * Initial release
+  * Add force-little-endian-random.patch to try and initialize random
+    number generator on s380x the same as on x86_64 (Closes: #1050526)
+  * Depend on dask-sphinx-theme 3.0.5-2 to avoid accidentally including
+    googletagmanager in the documentation.
 
- -- Tsic404 <liuheng@deepin.org>  Sat, 28 Jan 2023 13:46:49 +0800
+ -- Diane Trout <diane@ghic.org>  Fri, 25 Aug 2023 21:22:33 -0700
+
+dask (2023.8.0+dfsg-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Remove reproducible-version.patch, use-debian-version.patch
+    Upstream removed the embedded copy of versioneer.
+  * Add python3-versioneer dependency.
+  * Refresh patches.
+  * Add python3-sphinx-design dependency for better documentation
+  * Add pybuild-plugin-pyproject build dependency for pyproject.toml
+  * Change disable autopkgtests
+    - test_describe_empty seems to work now.
+    - test_RandomState_only_funcs fails for not throwing a
+      deprecationwarning
+  * Add python3-importlib-metadata Build-Depends for sphinx autosummary
+  * Disable patches that may not be needed
+    - skip-dtype-test-on-32bit.patch
+    - no_newline_error.patch
+  * add tzdata-legacy to control and test/control for some timezone tests
+  * Add verbatim-sphinx-ipython.patch to avoid updating ipython output
+    during the build process. This should improve reproducibility.
+
+ -- Diane Trout <diane@ghic.org>  Thu, 10 Aug 2023 16:02:14 -0700
+
+dask (2022.12.1+dfsg-2) unstable; urgency=medium
+
+  * Team upload.
+  * Drop python3-bcolz from Suggests
+  * Drop python3-bcolz from Test-Depends
+
+ -- Andreas Tille <tille@debian.org>  Wed, 01 Feb 2023 20:49:00 +0100
+
+dask (2022.12.1+dfsg-1) unstable; urgency=medium
+
+  [ Andreas Tille ]
+  * Team upload.
+  * New upstream version
+    Closes: #1025393, #1027254
+  * Simplify watch file
+  * Standards-Version: 4.6.2 (routine-update)
+  * Add salsa-ci file (routine-update)
+  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository-Browse.
+  * Ignore some sphinx packages that are not packaged yet
+  * yaml.min.js should be properly excluded from upstream source.  Just
+    in case it is needed it can be taken from debian/missing-sources.
+
+  [ Rebecca N. Palmer ]
+  * Docs: continue to use our js-yaml.
+  * Temporarily remove python3-distributed B-D to break cycle.
+    Closes: #1028667
+  * Docs: ignore build errors.
+  * Tests: be compatible with our CI setup.
+  * Remove newline from error message, to not break python3-intake.
+
+ -- Andreas Tille <tille@debian.org>  Mon, 16 Jan 2023 10:22:16 +0100
+
+dask (2022.02.0+dfsg-2) unstable; urgency=medium
+
+  * Add skip-dtype-test-on-32bit.patch (Closes: #1016719)
+
+ -- Diane Trout <diane@ghic.org>  Thu, 18 Aug 2022 14:23:16 -0700
+
+dask (2022.02.0+dfsg-1) unstable; urgency=medium
+
+  * New upstream release
+  * Refresh patches
+  * split tests/control Tests-Command: into a separate shell script
+  * Add sphinx-remove-toctree and sphinx-tabs to build-depends
+  * add 32-bit compatibility patch for pandas 1.3
+    See https://github.com/dask/dask/issues/8169
+  * Copy conftest.py into test directory for autopkgtests
+  * Add python3-ipython as a build-dependency.
+    - it provides a sphinx formatting extension.
+  * Add patch pytest-futurewarning.patch for compatibility with our pytest
+  * Add scipy-1.8.patch (Closes: #1013080) for Scipy 1.8 compatibility
+    Thanks: Graham Inggs
+  * run autopkgtest on all supported versions
+  * Remove built-using on -doc package
+
+ -- Diane Trout <diane@ghic.org>  Thu, 04 Aug 2022 11:15:42 -0700
+
+dask (2021.09.1+dfsg-2) unstable; urgency=medium
+
+  * add 32-bit compatibility patch for pandas 1.3
+    See https://github.com/dask/dask/issues/8169
+  * Upstream was concerned the 32-bit patch might not work with older
+    versions of pandas, so require at least pandas version 1.3
+  * Remove executable bit from dask/dataframe/io/orc/utils.py
+
+ -- Diane Trout <diane@ghic.org>  Mon, 20 Dec 2021 21:39:22 -0800
+
+dask (2021.09.1+dfsg-1) unstable; urgency=medium
+
+  * New upstream release. (Closes: #995782)
+  * Refresh patches
+  * Update Standards-Version. No changes needed.
+  * Add reproducible-config-autofunction.patch to remove
+    a source of unreproducibility
+
+ -- Diane Trout <diane@ghic.org>  Fri, 08 Oct 2021 14:30:58 -0700
+
+dask (2021.08.1+dfsg-3) unstable; urgency=medium
+
+  * Add Suggests for python3-jinja2 which is needed for widgets
+  * Make sure js-yaml.js is available for python-dask-doc
+
+ -- Diane Trout <diane@ghic.org>  Sun, 19 Sep 2021 20:01:52 -0700
+
+dask (2021.08.1+dfsg-2) unstable; urgency=medium
+
+  * Skip network tests in autopkgtest (Closes: 956069)
+    - Thanks Christian Kastner
+  * Properly link to sphinx_rtd_theme and node-js-yaml resources
+    (Closes: #988794)
+
+ -- Diane Trout <diane@ghic.org>  Thu, 02 Sep 2021 18:23:17 -0700
+
+dask (2021.08.1+dfsg-1) unstable; urgency=medium
+
+  [ Diane Trout ]
+  * New upstream release
+  * Fix fake http proxy url as dask's build system parses it
+  * Modify the documentation build process to use local files
+    - Cache copies of yaml files hosted at raw.githubusercontent.com/dask/
+    in debian/
+    - Add target to debian/rules to download the files
+  * Update Standards-Version to 4.5.1. No changes needed.
+  * Use Rules-Requires-Root: no
+  * Update to debhelper-compat 13
+  * Add python-asyncssh-doc as doc dependency
+  * Add link to sphinx_rtd_theme html5shiv.min.js
+  * Use Debian version of js-yaml
+  * Refresh patches
+  * Update use-local-intersphinx to use the local asyncssh docs
+  * Remove pandas-1.1 compatibility patches, resolved upstream
+  * Require a version of sparse that includes SparseArray
+  * Update cached yaml schema files
+
+  [ Stefano Rivera ]
+  * Patch: Use youtube-nocookie.com in docs.
+
+ -- Diane Trout <diane@ghic.org>  Mon, 07 Dec 2020 14:36:39 -0800
+
+dask (2.11.0+dfsg-3) unstable; urgency=medium
+
+  * Team upload.
+  * No-change source-only upload after manually re-bootstrapping with pandas
+    1.1.
+
+ -- Stefano Rivera <stefanor@debian.org>  Mon, 19 Oct 2020 15:11:47 -0700
+
+dask (2.11.0+dfsg-2) unstable; urgency=medium
+
+  * Team upload.
+
+  [ Ondřej Nový ]
+  * d/control: Update Maintainer field with new Debian Python Team
+    contact address.
+  * d/control: Update Vcs-* fields with new Debian Python Team Salsa
+    layout.
+
+  [ Stefano Rivera ]
+  * Round-trip patches through gbp-pq.
+  * Patch: Compatibility with pandas 1.1, Thanks Rebecca Palmer.
+    (Closes: #969648)
+  * wrap-and-sort control files.
+  * Patches for compatibility with current fsspec. (Closes: #972516)
+    - Depend on python3-aiohttp for autopkgtests.
+
+ -- Stefano Rivera <stefanor@debian.org>  Mon, 19 Oct 2020 13:39:49 -0700
+
+dask (2.11.0+dfsg-1) unstable; urgency=medium
+
+  * New upstream release
+  * Indicate stats.py copyright is from scipy.
+  * New release fixes pandas 1.0 compatitibility (Closes: #950927)
+
+ -- Diane Trout <diane@ghic.org>  Wed, 26 Feb 2020 13:01:52 -0800
+
+dask (2.8.1+dfsg-0.4) unstable; urgency=medium
+
+  * Non-maintainer upload
+  * Xfail test_temporary_directory on Python 3.8
+
+ -- Graham Inggs <ginggs@debian.org>  Sat, 04 Jan 2020 21:52:04 +0000
+
+dask (2.8.1+dfsg-0.3) unstable; urgency=medium
+
+  * Non-maintainer upload
+  * Allow output to stderr in autopkgtest to
+    ignore warnings with Python 3.8
+
+ -- Graham Inggs <ginggs@debian.org>  Sun, 29 Dec 2019 13:55:58 +0000
+
+dask (2.8.1+dfsg-0.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Add python3-packaging to the autopkg test dependencies.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 04 Dec 2019 20:38:16 +0100
+
+dask (2.8.1+dfsg-0.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * New upstream version. Closes: #942235.
+  * (Build)-depend on python3-fsspec.
+  * Add python3-fsspec to the autopkg test dependencies.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 04 Dec 2019 13:03:47 +0100
+
+dask (2.6.0+dfsg-1) UNRELEASED; urgency=medium
+
+  [ Ondřej Nový ]
+  * Use debhelper-compat instead of debian/compat.
+  * Bump Standards-Version to 4.4.1.
+
+  [ Drew Parsons ]
+  * New upstream release.
+   - applies patches:
+      avoid-duplicate-notes-with-numpydoc.patch
+      numpy-1.16-dtype.patch
+      numpy-1.16-gufunc.patch
+   - Build-Depends: python3-sphinx-click
+
+ -- Ondřej Nový <onovy@debian.org>  Sat, 20 Jul 2019 00:33:55 +0200
+
+dask (1.0.0+dfsg-2) unstable; urgency=medium
+
+  * Support numpy 1.16's multifield copy->view (Closes: 918204)
+  * Support numpy 1.16's extended gufunc signatures
+
+ -- Diane Trout <diane@ghic.org>  Thu, 10 Jan 2019 17:03:25 -0500
+
+dask (1.0.0+dfsg-1) unstable; urgency=medium
+
+  * New upstream release. (Closes: #913622)
+  * Refresh patches
+  * Remove use-local-bootstrap.patch, no longer relevant.
+  * Remove deprecated needs-recommended tag and add the test dependencies
+  * Remove libjs-bootstrap dependency
+  * Sort dependency list
+  * Use python3-dask-sphinx-theme instead of sphinx-rtd-theme
+  * profile.html, stacked_profile were removed upstream
+
+ -- Diane Trout <diane@ghic.org>  Sat, 08 Dec 2018 21:26:40 -0800
+
+dask (0.17.5-2) unstable; urgency=medium
+
+  * Try to make version reproducible.
+  * Add python3-requests as recommends
+    Directly imported by dask/bytes/http.py
+  * Add additional dependencies to suggests and tests
+    based on upstreams CI tests.
+  * Remove bokeh plots without source
+    (remove-bokeh-embeds.patch)
+  * Use local libjs-bootstrap for documentation
+    (use-local-boostrap.patch)
+  * Use the Debian changelog for versioneer's version
+    (use-debian-version.patch)
+  * Adjust testing dependencies
+
+ -- Diane Trout <diane@ghic.org>  Fri, 22 Jun 2018 21:27:55 -0700
+
+dask (0.17.5-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Diane Trout <diane@ghic.org>  Mon, 21 May 2018 11:42:08 -0700
+
+dask (0.17.4-1) unstable; urgency=medium
+
+  [ Ondřej Nový ]
+  * d/control: Set Vcs-* to salsa.debian.org
+  * d/control: Remove ancient X-Python3-Version field
+
+  [ Diane Trout ]
+  * New upstream version 0.17.4
+  * Use local numpy and pandas sphinx links for documentation
+  * Update to Standards-Version 4.1.4. No changes needed
+  * Update to debhelper 11
+  * Indicate what version of dask.distributed we expect to work with
+
+ -- Diane Trout <diane@ghic.org>  Wed, 16 May 2018 22:26:08 -0700
+
+dask (0.16.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Update Standards-Version to 4.1.2. No changes needed.
+  * Use https for Homepage URL.
+
+ -- Diane Trout <diane@ghic.org>  Fri, 08 Dec 2017 15:56:24 -0800
+
+dask (0.15.4-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Update Standards-Version to 4.1.1. No changes needed.
+  * Add python3-tables to tests/control
+
+ -- Diane Trout <diane@ghic.org>  Fri, 13 Oct 2017 08:20:30 -0700
+
+dask (0.15.1-3) unstable; urgency=medium
+
+  * Also set fullrevision-id in reprodicible-version.patch
+    (Closes: 871785)
+
+ -- Diane Trout <diane@ghic.org>  Fri, 11 Aug 2017 12:53:02 -0700
+
+dask (0.15.1-2) unstable; urgency=medium
+
+  * Add reproducible-version.patch to help build documentation reproducibly
+  * Add python3-scipy as documentation dependency
+  * Update to Standards-Version 4.0.1. No changes neede.
+
+ -- Diane Trout <diane@ghic.org>  Tue, 08 Aug 2017 21:52:34 -0700
+
+dask (0.15.1-1) unstable; urgency=medium
+
+  * Team upload
+
+  [ Diane Trout ]
+  * New upstream release (Closes: #860923)
+  * Update required build-depends versions for partd and toolz
+  * Update recommended dask.distributed version
+  * Update autopkgtest depends
+  * Add distributed as a documentation build dependency.
+
+  [ Ghislain Antony Vaillant ]
+  * Switch from git-dpm to gbp
+  * Simplify integration with the packaged MathJax
+    - New patch Use-the-packaged-MathJax.patch, replaces the old
+      use-mathjax-package.patch patch with a different approach
+    - Drop MathJax from Build-Depends, no longer required
+    - Add MathJax to Depends manually
+    - Drop symlinkage of MathJax at build time, no longer required
+  * Use the upstream Makefile for the docs
+  * Add missing Built-Using field for the docs
+  * Add docs to Suggests
+  * Honor the nodoc build profile
+    - Add versioned dependency on dpkg-dev
+    - Mark docs dependencies as <!nodoc>
+    - Add build dependency on sphinx-common
+    - Add Build-Profiles field to the doc package
+    - Do not build the docs if nodoc is requested
+  * Drop superfluous dependency on numpy
+  * Bump debhelper version to 10
+  * Run cme fix dpkg-control
+    - Drop some versioned dependencies
+    - Drop superfluous Testsuite field
+    - Overall wrap and sort of fields
+  * Move Diane Trout to Uploaders, DPMT is Maintainer
+  * New upstream version 0.14.3
+  * Update the patch queue
+    - Refresh Use-the-packaged-MathJax.patch
+    - New patch Add-MathJax-Sphinx-extension.patch
+  * Bump the minimum pandas version to 0.19.0
+  * Improve the DEP-8 tests
+    - Add missing dependency on python3-all
+    - Add missing dependency on ipython and sparse
+    - Add missing needs-recommends restriction
+    - Drop dependency on python3-distributed, now pulled transitively by
+      Recommends
+    - Run the tests in verbose mode
+  * Install the upstream change log
+  * Update copyright information
+
+ -- Ghislain Antony Vaillant <ghisvail@gmail.com>  Thu, 01 Jun 2017 20:46:31 +0100
+
+dask (0.12.0-1) unstable; urgency=low
+
+  * Initial Packaging (Closes: #817777)
+
+ -- Diane Trout <diane@ghic.org>  Wed, 07 Dec 2016 10:54:28 -0800
