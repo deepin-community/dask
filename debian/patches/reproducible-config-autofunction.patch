@@ -1,0 +1,55 @@
+Author: Diane Trout <diane@ghic.org>
+Forwarded: no
+Description: Call os.path.expanduser in the collect function instead of top level
+ Calling it when defining the PATH or paths variables meant the
+ value of os.path.expanduser("~") ended up as part of the default
+ function signature, which makes this unreproducible.
+ Also I think ~ is a bit clearer to the user, at least Unix-like OS users.
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -27,7 +27,7 @@
+         os.getenv("DASK_ROOT_CONFIG", "/etc/dask"),
+         os.path.join(sys.prefix, "etc", "dask"),
+         *[os.path.join(prefix, "etc", "dask") for prefix in site.PREFIXES],
+-        os.path.join(os.path.expanduser("~"), ".config", "dask"),
++        os.path.join("~", ".config", "dask"),
+     ]
+     if "DASK_CONFIG" in os.environ:
+         paths.append(os.environ["DASK_CONFIG"])
+@@ -43,7 +43,7 @@
+ if "DASK_CONFIG" in os.environ:
+     PATH = os.environ["DASK_CONFIG"]
+ else:
+-    PATH = os.path.join(os.path.expanduser("~"), ".config", "dask")
++    PATH = os.path.join("~", ".config", "dask")
+ 
+ 
+ config: dict = {}
+@@ -203,6 +203,7 @@
+     # Find all paths
+     file_paths = []
+     for path in paths:
++        path = os.path.expanduser(path)
+         if os.path.exists(path):
+             if os.path.isdir(path):
+                 try:
+@@ -291,7 +292,7 @@
+         Whether or not to comment out the config file when copying.
+     """
+     if destination is None:
+-        destination = PATH
++        destination = os.path.expanduser(PATH)
+ 
+     # destination is a file and already exists, never overwrite
+     if os.path.isfile(destination):
+--- a/dask/tests/test_config.py
++++ b/dask/tests/test_config.py
+@@ -581,7 +581,7 @@
+     expected = [
+         "/etc/dask",
+         os.path.join(sys.prefix, "etc", "dask"),
+-        os.path.join(os.path.expanduser("~"), ".config", "dask"),
++        os.path.join("~", ".config", "dask"),
+     ]
+     paths = _get_paths()
+     assert paths == expected

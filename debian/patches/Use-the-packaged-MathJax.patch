@@ -1,0 +1,20 @@
+From: Ghislain Antony Vaillant <ghisvail@gmail.com>
+Date: Wed, 31 May 2017 12:01:36 +0100
+Subject: Use the packaged MathJax
+Forwarded: not-needed
+
+---
+ docs/source/conf.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/docs/source/conf.py
++++ b/docs/source/conf.py
+@@ -63,6 +63,8 @@ sphinx_tabs_disable_tab_closing = True
+ # See https://github.com/dask/dask/issues/8227.
+ remove_from_toctrees = ["generated/*"]
+ 
++mathjax_path = 'file:///usr/share/javascript/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
++
+ # Add any paths that contain templates here, relative to this directory.
+ templates_path = ["_templates", sphinx_autosummary_accessors.templates_path]
+ 

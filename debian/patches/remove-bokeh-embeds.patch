@@ -1,0 +1,33 @@
+From: Diane Trout <diane@ghic.org>
+Date: Mon, 19 Oct 2020 10:06:35 -0700
+Subject: Disable links to sourceless plots that contain off system links.
+
+Forwarded: No
+---
+ docs/source/diagnostics-local.rst | 8 ++------
+ 1 file changed, 2 insertions(+), 6 deletions(-)
+
+--- a/docs/source/diagnostics-local.rst
++++ b/docs/source/diagnostics-local.rst
+@@ -183,9 +183,7 @@
+ 
+ .. raw:: html
+ 
+-    <iframe src="_static/profile.html"
+-            marginwidth="0" marginheight="0" scrolling="no"
+-            width="650" height="300" style="border:none"></iframe>
++    <p>Example disable for privacy protection</p>
+ 
+ To view multiple profilers at the same time, the :func:`dask.diagnostics.visualize`
+ function can be used. This takes a list of profilers and creates a vertical
+@@ -199,9 +197,7 @@
+ 
+ .. raw:: html
+ 
+-    <iframe src="_static/stacked_profile.html"
+-            marginwidth="0" marginheight="0" scrolling="no"
+-            width="650" height="700" style="border:none"></iframe>
++    <p>Example disable for privacy protection</p>
+ 
+ 
+ Looking at the above figure, from top to bottom:

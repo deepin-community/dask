@@ -1,4 +1,40 @@
 #!/usr/bin/make -f
 
+export PYBUILD_NAME=dask
 %:
-	dh $@
+	dh $@ --with python3,sphinxdoc --buildsystem=pybuild
+
+override_dh_auto_clean:
+	dh_auto_clean
+ifeq (,$(findstring nodoc,$(DEB_BUILD_PROFILES)))
+	$(MAKE) -C docs clean
+endif
+
+override_dh_auto_build: export http_proxy=http://127.0.0.1:9
+override_dh_auto_build: export https_proxy=https://127.0.0.1:9
+override_dh_auto_build:
+	dh_auto_build
+ifeq (,$(findstring nodoc,$(DEB_BUILD_PROFILES)))
+	PYTHONPATH=$(CURDIR) $(MAKE) -C docs html || true
+	rm -rf docs/build/html/_static/__pycache__
+endif
+
+# Test needs: skimage, scipy, s3fs, cachey, distributed, graphviz
+# dask is a build-dep for distributed... so we can't run tests at build
+.PHONY: override_dh_auto_test
+
+override_dh_auto_install:
+	dh_auto_install
+	dh_link
+	chmod a-x debian/python3-dask/usr/lib/python3*/dist-packages/dask/dataframe/io/orc/utils.py
+
+override_dh_installchangelogs:
+	dh_installchangelogs docs/source/changelog.rst
+
+# Upstream provides these files separately from the source tree
+# but they're needed to build the documentation.
+update_yaml_files:
+	curl -L -o debian/dask-config-blocks/dask.yaml https://raw.githubusercontent.com/dask/dask/master/dask/dask.yaml
+	curl -L -o debian/dask-config-blocks/dask-schema.yaml https://raw.githubusercontent.com/dask/dask/master/dask/dask-schema.yaml
+	curl -L -o debian/dask-config-blocks/distributed.yaml https://raw.githubusercontent.com/dask/distributed/master/distributed/distributed.yaml
+	curl -L -o debian/dask-config-blocks/distributed-schema.yaml https://raw.githubusercontent.com/dask/distributed/master/distributed/distributed-schema.yaml

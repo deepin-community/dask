@@ -1,0 +1,11 @@
+remove-bokeh-embeds.patch
+Use-the-packaged-MathJax.patch
+use-local-intersphinx.patch
+use-local-reference-yaml.patch
+use-youtube-nocookie.patch
+reproducible-config-autofunction.patch
+ignore_some_sphinx_packages.patch
+js-yaml.patch
+test_warnings_not_errors.patch
+verbatim-sphinx-ipython.patch
+force-little-endian-random.patch

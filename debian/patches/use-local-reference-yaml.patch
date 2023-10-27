@@ -1,0 +1,113 @@
+Author: Diane Trout <diane@ghic.org>
+Description: Use local files for building documentation instead of
+ downloading them from github.
+Forwarded: no
+
+--- a/docs/source/configuration.rst
++++ b/docs/source/configuration.rst
+@@ -452,8 +452,8 @@ Dask
+ 
+ .. dask-config-block::
+     :location: dask
+-    :config: https://raw.githubusercontent.com/dask/dask/main/dask/dask.yaml
+-    :schema: https://raw.githubusercontent.com/dask/dask/main/dask/dask-schema.yaml
++    :config: file:///../debian/dask-config-blocks/dask.yaml
++    :schema: file:///../debian/dask-config-blocks/dask-schema.yaml
+ 
+ 
+ Distributed Client
+@@ -461,16 +461,16 @@ Distributed Client
+ 
+ .. dask-config-block::
+     :location: distributed.client
+-    :config: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed.yaml
+-    :schema: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed-schema.yaml
++    :config: file:///../debian/dask-config-blocks/distributed.yaml
++    :schema: file:///../debian/dask-config-blocks/distributed-schema.yaml
+ 
+ Distributed Comm
+ ~~~~~~~~~~~~~~~~
+ 
+ .. dask-config-block::
+     :location: distributed.comm
+-    :config: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed.yaml
+-    :schema: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed-schema.yaml
++    :config: file:///../debian/dask-config-blocks/distributed.yaml
++    :schema: file:///../debian/dask-config-blocks/distributed-schema.yaml
+ 
+ 
+ Distributed Dashboard
+@@ -478,8 +478,8 @@ Distributed Dashboard
+ 
+ .. dask-config-block::
+     :location: distributed.dashboard
+-    :config: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed.yaml
+-    :schema: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed-schema.yaml
++    :config: file:///../debian/dask-config-blocks/distributed.yaml
++    :schema: file:///../debian/dask-config-blocks/distributed-schema.yaml
+ 
+ 
+ Distributed Deploy
+@@ -487,8 +487,8 @@ Distributed Deploy
+ 
+ .. dask-config-block::
+     :location: distributed.deploy
+-    :config: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed.yaml
+-    :schema: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed-schema.yaml
++    :config: file:///../debian/dask-config-blocks/distributed.yaml
++    :schema: file:///../debian/dask-config-blocks/distributed-schema.yaml
+ 
+ 
+ Distributed Scheduler
+@@ -496,8 +496,8 @@ Distributed Scheduler
+ 
+ .. dask-config-block::
+     :location: distributed.scheduler
+-    :config: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed.yaml
+-    :schema: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed-schema.yaml
++    :config: file:///../debian/dask-config-blocks/distributed.yaml
++    :schema: file:///../debian/dask-config-blocks/distributed-schema.yaml
+ 
+ 
+ Distributed Worker
+@@ -505,8 +505,8 @@ Distributed Worker
+ 
+ .. dask-config-block::
+     :location: distributed.worker
+-    :config: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed.yaml
+-    :schema: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed-schema.yaml
++    :config: file:///../debian/dask-config-blocks/distributed.yaml
++    :schema: file:///../debian/dask-config-blocks/distributed-schema.yaml
+ 
+ 
+ Distributed Nanny
+@@ -514,8 +514,8 @@ Distributed Nanny
+ 
+ .. dask-config-block::
+     :location: distributed.nanny
+-    :config: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed.yaml
+-    :schema: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed-schema.yaml
++    :config: file:///../debian/dask-config-blocks/distributed.yaml
++    :schema: file:///../debian/dask-config-blocks/distributed-schema.yaml
+ 
+ 
+ Distributed Admin
+@@ -523,8 +523,8 @@ Distributed Admin
+ 
+ .. dask-config-block::
+     :location: distributed.admin
+-    :config: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed.yaml
+-    :schema: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed-schema.yaml
++    :config: file:///../debian/dask-config-blocks/distributed.yaml
++    :schema: file:///../debian/dask-config-blocks/distributed-schema.yaml
+ 
+ 
+ Distributed RMM
+@@ -532,5 +532,5 @@ Distributed RMM
+ 
+ .. dask-config-block::
+     :location: distributed.rmm
+-    :config: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed.yaml
+-    :schema: https://raw.githubusercontent.com/dask/distributed/main/distributed/distributed-schema.yaml
++    :config: file:///../debian/dask-config-blocks/distributed.yaml
++    :schema: file:///../debian/dask-config-blocks/distributed-schema.yaml

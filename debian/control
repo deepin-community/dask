@@ -1,15 +1,101 @@
-Source: template-repository
-Section: unknown
+Source: dask
+Maintainer: Debian Python Team <team+python@tracker.debian.org>
+Uploaders: Diane Trout <diane@ghic.org>
+Section: python
 Priority: optional
-Maintainer: Tsic404 <liuheng@deepin.org>
-Build-Depends: debhelper (>= 11)
-Standards-Version: 4.1.3
-Homepage: https://github.com/deepin-community/template-repository
-#Vcs-Browser: https://salsa.debian.org/debian/deepin-community-template-repository
-#Vcs-Git: https://salsa.debian.org/debian/deepin-community-template-repository.git
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               node-js-yaml <!nodoc>,
+               pybuild-plugin-pyproject,
+               python-asyncssh-doc <!nodoc>,
+#               python-numpy-doc <!nodoc>,
+               python-pandas-doc <!nodoc>,
+               python3-all,
+               python3-cloudpickle <!nodoc>,
+               python3-dask-sphinx-theme (>= 3.0.5-2) <!nodoc>,
+# temporarily removed for bootstrapping               python3-distributed <!nodoc>,
+               python3-fsspec,
+               python3-importlib-metadata <!nodoc>,
+               python3-ipython <!nodoc>,
+               python3-numpydoc <!nodoc>,
+               python3-pandas (>= 1.3) <!nodoc>,
+               python3-partd <!nodoc>,
+               python3-scipy <!nodoc>,
+               python3-setuptools,
+#               python3-sparse (>= 0.11) <!nocheck>,
+               python3-sphinx <!nodoc>,
+               python3-sphinx-click <!nodoc>,
+               python3-sphinx-copybutton <!nodoc>,
+               python3-sphinx-design <!nodoc>,
+               python3-sphinx-remove-toctrees <!nodoc>,
+               python3-sphinx-tabs <!nodoc>,
+               python3-toolz <!nodoc>,
+               python3-versioneer,
+               sphinx-common,
+               tzdata-legacy,
+Standards-Version: 4.6.2
+Vcs-Browser: https://salsa.debian.org/python-team/packages/dask
+Vcs-Git: https://salsa.debian.org/python-team/packages/dask.git
+Homepage: https://github.com/dask/dask
+Rules-Requires-Root: no
 
-Package: template-repository
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: <insert up to 60 chars description>
- <insert long description, indented with spaces>
+Package: python3-dask
+Architecture: all
+Depends: python3-fsspec,
+         python3-toolz,
+         ${misc:Depends},
+         ${python3:Depends}
+Recommends: python3-cloudpickle,
+            python3-numpy,
+            python3-pandas,
+            python3-partd,
+            python3-requests
+Suggests: ipython,
+          python-dask-doc <!nodoc>,
+          python3-blosc,
+          python3-boto,
+          python3-distributed,
+          python3-graphviz,
+          python3-h5py,
+          python3-jinja2,
+          python3-psutil,
+          python3-scipy,
+          python3-skimage,
+          python3-sklearn,
+          python3-sqlalchemy,
+          python3-tables
+Description: Minimal task scheduling abstraction for Python 3
+ Dask is a flexible parallel computing library for analytics,
+ containing two components.
+ .
+ 1. Dynamic task scheduling optimized for computation. This is similar
+ to Airflow, Luigi, Celery, or Make, but optimized for interactive
+ computational workloads.
+ 2. "Big Data" collections like parallel arrays, dataframes, and lists
+ that extend common interfaces like NumPy, Pandas, or Python iterators
+ to larger-than-memory or distributed environments. These parallel
+ collections run on top of the dynamic task schedulers.
+ .
+ This contains the Python 3 version.
+
+Package: python-dask-doc
+Architecture: all
+Section: doc
+Depends: libjs-mathjax,
+         node-js-yaml,
+         ${misc:Depends},
+         ${sphinxdoc:Depends}
+Description: Minimal task scheduling abstraction documentation
+ Dask is a flexible parallel computing library for analytics,
+ containing two components.
+ .
+ 1. Dynamic task scheduling optimized for computation. This is similar
+ to Airflow, Luigi, Celery, or Make, but optimized for interactive
+ computational workloads.
+ 2. "Big Data" collections like parallel arrays, dataframes, and lists
+ that extend common interfaces like NumPy, Pandas, or Python iterators
+ to larger-than-memory or distributed environments. These parallel
+ collections run on top of the dynamic task schedulers.
+ .
+ This contains the documentation
+Build-Profiles: <!nodoc>

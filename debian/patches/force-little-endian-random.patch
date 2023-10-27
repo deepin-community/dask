@@ -1,0 +1,19 @@
+Author: Diane Trout <diane@ghic.org>
+Description: Force initializing the random seed with the same
+ byte order interpretation as on x86.
+
+Index: dask-2023.8.0+dfsg/dask/utils.py
+===================================================================
+--- dask-2023.8.0+dfsg.orig/dask/utils.py
++++ dask-2023.8.0+dfsg/dask/utils.py
+@@ -426,7 +426,9 @@ def random_state_data(n: int, random_sta
+         random_state = np.random.RandomState(random_state)
+ 
+     random_data = random_state.bytes(624 * n * 4)  # `n * 624` 32-bit integers
+-    l = list(np.frombuffer(random_data, dtype=np.uint32).reshape((n, -1)))
++    dt = np.dtype(np.uint32)
++    dt = dt.newbyteorder("<")
++    l = list(np.frombuffer(random_data, dtype=dt).reshape((n, -1)))
+     assert len(l) == n
+     return l
+ 

@@ -1,0 +1,31 @@
+From: Diane Trout <diane@ghic.org>
+Date: Mon, 19 Oct 2020 10:06:35 -0700
+Subject: Use local intersphinx references,
+ instead of the web. Also deleted some duplicated code.
+
+Forwarded: No
+---
+ docs/source/conf.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/docs/source/conf.py
++++ b/docs/source/conf.py
+@@ -325,15 +325,15 @@ intersphinx_mapping = {
+     "python": ("https://docs.python.org/3/", None),
+     "pandas": (
+         "https://pandas.pydata.org/pandas-docs/stable/",
+-        "https://pandas.pydata.org/pandas-docs/stable/objects.inv",
++        "/usr/share/doc/python-pandas-doc/html/objects.inv",
+     ),
+     "numpy": (
+         "https://numpy.org/doc/stable/",
+-        "https://numpy.org/doc/stable/objects.inv",
++        "/usr/share/doc/python-numpy-doc/html/objects.inv",
+     ),
+     "asyncssh": (
+         "https://asyncssh.readthedocs.io/en/latest/",
+-        "https://asyncssh.readthedocs.io/en/latest/objects.inv",
++        "/usr/share/doc/python-asyncssh-doc/html/objects.inv",
+     ),
+     "distributed": ("https://distributed.dask.org/en/latest", None),
+     "pyarrow": ("https://arrow.apache.org/docs/", None),

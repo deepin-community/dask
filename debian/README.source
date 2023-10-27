@@ -1,0 +1,4 @@
+Github is used as the Upstream source instead of pypi because upstream
+doesn't include the configuration to build the documentation on pypi.
+
+ -- Diane Trout <diane@ghic.org>, Wed,  7 Dec 2016 11:48:46 -0800
