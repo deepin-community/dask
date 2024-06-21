@@ -10,8 +10,13 @@ Forwarded: No
 
 --- a/docs/source/conf.py
 +++ b/docs/source/conf.py
-@@ -325,15 +325,15 @@ intersphinx_mapping = {
-     "python": ("https://docs.python.org/3/", None),
+@@ -327,29 +327,30 @@
+ #  --Options for sphinx extensions -----------------------------------------------
+ 
+ intersphinx_mapping = {
+-    "python": ("https://docs.python.org/3/", None),
++    "python": ("https://docs.python.org/3/",
++               "/usr/share/doc/python3/html/objects.inv"),
      "pandas": (
          "https://pandas.pydata.org/pandas-docs/stable/",
 -        "https://pandas.pydata.org/pandas-docs/stable/objects.inv",
@@ -29,3 +34,16 @@ Forwarded: No
      ),
      "distributed": ("https://distributed.dask.org/en/latest", None),
      "pyarrow": ("https://arrow.apache.org/docs/", None),
+     "zarr": (
+         "https://zarr.readthedocs.io/en/latest/",
+-        "https://zarr.readthedocs.io/en/latest/objects.inv",
++        None,
+     ),
+     "skimage": ("https://scikit-image.org/docs/dev/", None),
+     "fsspec": (
+         "https://filesystem-spec.readthedocs.io/en/latest/",
+-        "https://filesystem-spec.readthedocs.io/en/latest/objects.inv",
++        "/usr/share/doc/python-fsspec-doc/html/objects.inv",
+     ),
+     "click": ("https://click.palletsprojects.com/", None),
+     "scipy": ("https://docs.scipy.org/doc/scipy", None),

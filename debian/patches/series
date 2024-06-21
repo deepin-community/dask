@@ -6,6 +6,9 @@ use-youtube-nocookie.patch
 reproducible-config-autofunction.patch
 ignore_some_sphinx_packages.patch
 js-yaml.patch
-test_warnings_not_errors.patch
 verbatim-sphinx-ipython.patch
-force-little-endian-random.patch
+fix-sphinx-config.patch
+fix-test_accessors.patch
+use-local-xarray-logo.patch
+disable-dask-expr-docs.patch
+cleanup-some-privacy-breaches.patch

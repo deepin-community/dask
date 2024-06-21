@@ -11,6 +11,7 @@ from tlz import concat
 import dask
 import dask.array as da
 from dask.array.core import normalize_chunks
+from dask.array.numpy_compat import AxisError
 from dask.array.utils import assert_eq, same_keys
 
 
@@ -380,7 +381,7 @@ def test_meshgrid(shapes, chunks, indexing, sparse):
     r_a = np.meshgrid(*xi_a, indexing=indexing, sparse=sparse)
     r_d = da.meshgrid(*xi_d, indexing=indexing, sparse=sparse)
 
-    assert isinstance(r_d, list)
+    assert type(r_d) is type(r_a)
     assert len(r_a) == len(r_d)
 
     for e_r_a, e_r_d, i in zip(r_a, r_d, do):
@@ -521,10 +522,10 @@ def test_diagonal():
     with pytest.raises(ValueError):
         da.diagonal(v, axis1=0, axis2=0)
 
-    with pytest.raises(np.AxisError):
+    with pytest.raises(AxisError):
         da.diagonal(v, axis1=-4)
 
-    with pytest.raises(np.AxisError):
+    with pytest.raises(AxisError):
         da.diagonal(v, axis2=-4)
 
     v = np.arange(4 * 5 * 6).reshape((4, 5, 6))

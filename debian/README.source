@@ -1,3 +1,14 @@
+Important: source packages dask and dask.distributed upstream version
+must be kept synchronous!
+
+This is important for the consistency of the set of dask Python modules.
+In most cases, loss of synchronisation with upstream version will cause
+test regressions in dask.distributed.  But, as long as dask.distributed
+autopkgtest is marked as flaky, debci will not be able to raise alarms
+to flag the regression properly, and it risks making its way in testing.
+
+ -- Étienne Mollier <emollier@debian.org>, Sun, 16 Jun 2024 11:32:07 +0200
+
 Github is used as the Upstream source instead of pypi because upstream
 doesn't include the configuration to build the documentation on pypi.
 

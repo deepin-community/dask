@@ -5,9 +5,9 @@ Description: Call os.path.expanduser in the collect function instead of top leve
  value of os.path.expanduser("~") ended up as part of the default
  function signature, which makes this unreproducible.
  Also I think ~ is a bit clearer to the user, at least Unix-like OS users.
---- a/dask/config.py
-+++ b/dask/config.py
-@@ -27,7 +27,7 @@
+--- dask.orig/dask/config.py
++++ dask/dask/config.py
+@@ -28,7 +28,7 @@
          os.getenv("DASK_ROOT_CONFIG", "/etc/dask"),
          os.path.join(sys.prefix, "etc", "dask"),
          *[os.path.join(prefix, "etc", "dask") for prefix in site.PREFIXES],
@@ -16,7 +16,7 @@ Description: Call os.path.expanduser in the collect function instead of top leve
      ]
      if "DASK_CONFIG" in os.environ:
          paths.append(os.environ["DASK_CONFIG"])
-@@ -43,7 +43,7 @@
+@@ -44,7 +44,7 @@
  if "DASK_CONFIG" in os.environ:
      PATH = os.environ["DASK_CONFIG"]
  else:
@@ -25,7 +25,7 @@ Description: Call os.path.expanduser in the collect function instead of top leve
  
  
  config: dict = {}
-@@ -203,6 +203,7 @@
+@@ -220,6 +220,7 @@
      # Find all paths
      file_paths = []
      for path in paths:
@@ -33,7 +33,7 @@ Description: Call os.path.expanduser in the collect function instead of top leve
          if os.path.exists(path):
              if os.path.isdir(path):
                  try:
-@@ -291,7 +292,7 @@
+@@ -333,7 +334,7 @@
          Whether or not to comment out the config file when copying.
      """
      if destination is None:
@@ -42,9 +42,9 @@ Description: Call os.path.expanduser in the collect function instead of top leve
  
      # destination is a file and already exists, never overwrite
      if os.path.isfile(destination):
---- a/dask/tests/test_config.py
-+++ b/dask/tests/test_config.py
-@@ -581,7 +581,7 @@
+--- dask.orig/dask/tests/test_config.py
++++ dask/dask/tests/test_config.py
+@@ -652,7 +652,7 @@
      expected = [
          "/etc/dask",
          os.path.join(sys.prefix, "etc", "dask"),

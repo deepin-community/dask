@@ -1,0 +1,62 @@
+Description: remove unnecessary privacy breaches.
+ This patch gets rid of privacy breaches providing little to no added
+ value to upstream documentation.  Notably the youtube videos (already
+ patched to be inlined by the "no cookies" variant) are kept around, and
+ the transpose_cyto document has preserved links to precise script
+ versions, as they also check for script integrity, making offline
+ replacements possibly delicate.
+
+Author: Étienne Mollier <emollier@debian.org>
+Forwarded: not-needed
+Last-Update: 2024-06-16
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- dask.orig/docs/source/gpu.rst
++++ dask/docs/source/gpu.rst
+@@ -16,14 +16,7 @@
+ functions.  Whether or not those Python functions use a GPU is orthogonal to
+ Dask.  It will work regardless.
+ 
+-As a worked example, you may want to view this talk:
+-
+-.. raw:: html
+-
+-    <video width="560" height="315" controls>
+-        <source src="https://developer.download.nvidia.com/video/gputechconf/gtc/2019/video/S9198/s9198-dask-and-v100s-for-fast-distributed-batch-scoring-of-computer-vision-workloads.mp4"
+-                type="video/mp4">
+-    </video>
++As a worked example, you may want to view :bdg-link-primary:`Batch Scoring for Computer Vision Workloads (video) <https://developer.download.nvidia.com/video/gputechconf/gtc/2019/video/S9198/s9198-dask-and-v100s-for-fast-distributed-batch-scoring-of-computer-vision-workloads.mp4>`
+ 
+ High Level Collections
+ ----------------------
+--- dask.orig/docs/source/index.rst
++++ dask/docs/source/index.rst
+@@ -13,14 +13,6 @@
+        -  **Powerful** at providing scale, and unlocking complex algorithms
+        -  and **Fun** 🎉
+ 
+-    .. grid-item::
+-       :columns: 12 12 6 6
+-
+-       .. raw:: html
+-
+-            <script src="https://fast.wistia.com/embed/medias/l9sgt2saht.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:75.0% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:100%;left:0;position:absolute;top:0;width:100%;"><div class="wistia_embed wistia_async_l9sgt2saht seo=true videoFoam=true" style="height:100%;position:relative;width:100%">&nbsp;</div></div></div>
+-
+-
+ How to Use Dask
+ ---------------
+ 
+--- dask.orig/docs/source/support.rst
++++ dask/docs/source/support.rst
+@@ -38,11 +38,6 @@
+     US Central Time in `this video meeting <https://us06web.zoom.us/j/89383035703?pwd=WkRJSzNnRTh4T2R1ZjJuVVdJWlMxQT09>`__.
+     Sign ups `here <https://github.com/dask/community/issues/307>`__.
+ 
+-    .. raw:: html
+-
+-       <iframe id="calendariframe" src="https://calendar.google.com/calendar/embed?ctz=local&amp;src=4l0vts0c1cgdbq5jhcogj55sfs%40group.calendar.google.com" style="border: 0" width="800" height="600" frameborder="0" scrolling="no"></iframe>
+-       <script>document.getElementById("calendariframe").src = document.getElementById("calendariframe").src.replace("ctz=local", "ctz=" + Intl.DateTimeFormat().resolvedOptions().timeZone)</script>
+-
+     You can subscribe to this calendar to be notified of changes:
+ 
+     * `Google Calendar <https://calendar.google.com/calendar/u/0?cid=NGwwdnRzMGMxY2dkYnE1amhjb2dqNTVzZnNAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ>`__

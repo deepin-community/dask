@@ -1,3 +1,71 @@
+dask (2024.5.2+dfsg-1) unstable; urgency=medium
+
+  [ Étienne Mollier ]
+  * Team upload.
+  * New upstream version 2024.5.2+dfsg
+    Closes: #1068422, #1069821, #1069359
+  * ignore_some_sphinx_packages: patch refreshed.
+  * force-little-endian-random.patch: remove, issue fixed upstream.
+  * Unfuzz patches.
+  * Delete unused patches.
+  * fix-test_accessors.patch: new.
+  * d/copyright: fix a file statement causing a spurious lintian warning.
+
+  [ Diane Trout ]
+  * Refresh use-local-intersphinx.patch
+  * Add python-fsspec-doc and python3-doc for local object.inv files
+  * Cache Xarray logo in _images/Xarray_Logo_RGB_Final.png to avoid
+    privacy breach
+  * Add disable-dask-expr-docs.patch (Closes: #1073183)
+    Trying to autogenerate the api for a library that's not available in
+    Debian caused sphinx-build to fail without generating any html files.
+  * Add a minimal check in d/rules to make sure that at least some
+    documentation was built.
+  * Oops. Use the longer more descriptive name.
+    I started with one name and then changed it and did all my test builds
+    before cleaning up the "unused" files.
+
+  [ Étienne Mollier ]
+  * cleanup-some-privacy-breaches.patch: new.
+    This cleans up some privacy breaches in dask documentation,
+    essentially where online resources do not bring much to the
+    comprehension.
+  * d/control: declare compliance to standards version 4.7.0.
+  * d/README.source: document keeping dask.distributed synchronized.
+  * d/rules: remove spurious license file tripping lintian.
+
+ -- Étienne Mollier <emollier@debian.org>  Sun, 16 Jun 2024 20:20:55 +0200
+
+dask (2024.1.1+dfsg-1) unstable; urgency=medium
+
+  * Team upload
+
+  [ Alexandre Detiste ]
+  * New upstream release
+  * Suggests: python3-boto3 instead of python3-boto
+  * Refresh use-youtube-nocookie.patch
+
+  [ Jeremy Bícha ]
+  * Refresh patch
+  * Drop patch applied in new release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 01 May 2024 08:32:03 -0400
+
+dask (2023.12.1+dfsg-2) unstable; urgency=medium
+
+  * Build-depend on dask.distributed (needed to build -1 without this for
+    bootstrapping)
+
+ -- Julian Gilbey <jdg@debian.org>  Wed, 03 Jan 2024 21:34:32 +0000
+
+dask (2023.12.1+dfsg-1) unstable; urgency=medium
+
+  * Team upload
+  * New upstream version (closes: #1053947, #1056239)
+  * Skip test known to fail on Python 3.12
+
+ -- Julian Gilbey <jdg@debian.org>  Tue, 02 Jan 2024 21:51:10 +0000
+
 dask (2023.8.0+dfsg-2) unstable; urgency=medium
 
   * Add force-little-endian-random.patch to try and initialize random

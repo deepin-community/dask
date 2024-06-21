@@ -1,4 +1,3 @@
-
 #!/bin/bash 
 set -e
 
@@ -7,10 +6,13 @@ set -e
 SKIP_TESTS=test_development_guidelines_matches_ci
 # failed to raise a warning.
 SKIP_TESTS="$SKIP_TESTS or test_RandomState_only_funcs"
+# See https://github.com/dask/dask/issues/10418
+SKIP_TESTS="$SKIP_TESTS or test_division_or_partition"
 
 cp conftest.py "$AUTOPKGTEST_TMP"
-for py in $(py3versions --supported 2>/dev/null)
-do cd "$AUTOPKGTEST_TMP"
+for py in $(py3versions --supported)
+do
+  cd "$AUTOPKGTEST_TMP"
   echo "Testing with $py:"
   http_proxy= $py -m pytest -k "not ( ${SKIP_TESTS} )" -m "not network" -v --pyargs dask
 done

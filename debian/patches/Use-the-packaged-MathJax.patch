@@ -7,9 +7,9 @@ Forwarded: not-needed
  docs/source/conf.py | 2 ++
  1 file changed, 2 insertions(+)
 
---- a/docs/source/conf.py
-+++ b/docs/source/conf.py
-@@ -63,6 +63,8 @@ sphinx_tabs_disable_tab_closing = True
+--- dask.orig/docs/source/conf.py
++++ dask/docs/source/conf.py
+@@ -67,6 +67,8 @@
  # See https://github.com/dask/dask/issues/8227.
  remove_from_toctrees = ["generated/*"]
  

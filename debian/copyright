@@ -5,7 +5,6 @@ Source: https://github.com/dask/dask
 Files-Excluded:
  docs/source/_static/profile.html
  docs/source/_static/stacked_profile.html
- docs/source/_static/js-yaml.min.js
  docs/source/_static/yaml.min.js
 
 Files: *
@@ -22,7 +21,7 @@ Copyright: 2016-2017 Diane Trout <diane@ghic.org>
  2017 Ghislain Antony Vaillant <ghisvail@gmail.com>
 License: Expat
 
-Files: debian/missing-sources/yaml.js
+Files: debian/missing-sources/yaml.js/*
 Copyright: 2010 Jeremy Faivre
 License: Expat
 

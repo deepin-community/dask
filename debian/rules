@@ -16,6 +16,11 @@ override_dh_auto_build:
 	dh_auto_build
 ifeq (,$(findstring nodoc,$(DEB_BUILD_PROFILES)))
 	PYTHONPATH=$(CURDIR) $(MAKE) -C docs html || true
+	if [ \! -f docs/build/html/index.html ]; then \
+	    echo "sphinx documentation build completely failed"; \
+	    exit 1; \
+	fi
+	cp debian/_images/Xarray_Logo_RGB_Final.png docs/build/html/_images/
 	rm -rf docs/build/html/_static/__pycache__
 endif
 
@@ -30,6 +35,9 @@ override_dh_auto_install:
 
 override_dh_installchangelogs:
 	dh_installchangelogs docs/source/changelog.rst
+
+execute_after_dh_installdocs:
+	rm -vf debian/python-dask-doc/usr/share/doc/python-dask-doc/html/_static/vendor/fontawesome/*/LICENSE.txt
 
 # Upstream provides these files separately from the source tree
 # but they're needed to build the documentation.

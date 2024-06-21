@@ -78,7 +78,10 @@ from pandas.api.types import is_datetime64_dtype, is_integer_dtype
 from tlz import merge, merge_sorted, take
 
 from dask.base import tokenize
+from dask.dataframe._compat import PANDAS_GE_150
 from dask.dataframe.core import Series
+from dask.dataframe.dispatch import tolist_dispatch
+from dask.dataframe.utils import is_series_like
 from dask.utils import is_cupy_type, random_state_data
 
 
@@ -262,7 +265,11 @@ def percentiles_to_weights(qs, vals, length):
         return ()
     diff = np.ediff1d(qs, 0.0, 0.0)
     weights = 0.5 * length * (diff[1:] + diff[:-1])
-    return vals.tolist(), weights.tolist()
+    try:
+        # Try using tolist_dispatch first
+        return tolist_dispatch(vals), weights.tolist()
+    except TypeError:
+        return vals.tolist(), weights.tolist()
 
 
 def merge_and_compress_summaries(vals_and_weights):
@@ -316,7 +323,7 @@ def process_val_weights(vals_and_weights, npartitions, dtype_info):
             return np.array(None, dtype=dtype)
         except Exception:
             # dtype does not support None value so allow it to change
-            return np.array(None, dtype=np.float_)
+            return np.array(None, dtype=np.float64)
 
     vals, weights = vals_and_weights
     vals = np.array(vals)
@@ -425,12 +432,36 @@ def percentiles_summary(df, num_old, num_new, upsample, state):
     elif is_datetime64_dtype(data.dtype) or is_integer_dtype(data.dtype):
         interpolation = "nearest"
 
-    # FIXME: pandas quantile doesn't work with some data types (e.g. strings).
-    # We fall back to an ndarray as a workaround.
     try:
-        vals = data.quantile(q=qs / 100, interpolation=interpolation).values
+        # Plan A: Use `Series.quantile`
+        vals = data.quantile(q=qs / 100, interpolation=interpolation)
     except (TypeError, NotImplementedError):
-        vals, _ = _percentile(array_safe(data, like=data.values), qs, interpolation)
+        # Series.quantile doesn't work with some data types (e.g. strings)
+        if PANDAS_GE_150:
+            # Fall back to DataFrame.quantile with "nearest" interpolation
+            interpolation = "nearest"
+            vals = (
+                data.to_frame()
+                .quantile(
+                    q=qs / 100,
+                    interpolation=interpolation,
+                    numeric_only=False,
+                    method="table",
+                )
+                .iloc[:, 0]
+            )
+        else:
+            # Fall back to ndarray (Not supported for cuDF)
+            vals, _ = _percentile(array_safe(data, like=data.values), qs, interpolation)
+
+    # Convert to array if necessary (and possible)
+    if is_series_like(vals):
+        try:
+            vals = vals.values
+        except (ValueError, TypeError):
+            # cudf->cupy won't work if nulls are present,
+            # or if this is a string dtype
+            pass
 
     if (
         is_cupy_type(data)

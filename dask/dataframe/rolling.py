@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import warnings
 from numbers import Integral
 
 import pandas as pd
@@ -20,7 +21,6 @@ from dask.dataframe.core import (
     _maybe_from_pandas,
     apply_and_enforce,
     new_dd_object,
-    no_default,
     partitionwise_graph,
 )
 from dask.dataframe.io import from_pandas
@@ -33,6 +33,7 @@ from dask.dataframe.utils import (
 )
 from dask.delayed import unpack_collections
 from dask.highlevelgraph import HighLevelGraph
+from dask.typing import no_default
 from dask.utils import M, apply, derived_from, funcname, has_keyword
 
 CombinedOutput = type("CombinedOutput", (tuple,), {})
@@ -111,7 +112,7 @@ def map_overlap(
     ----------
     func : function
         The function applied to each partition. If this function accepts
-        the special ``partition_info`` keyword argument, it will recieve
+        the special ``partition_info`` keyword argument, it will receive
         information on the partition's relative location within the
         dataframe.
     df: dd.DataFrame, dd.Series
@@ -478,6 +479,13 @@ class Rolling:
         # that information here.
         # See https://github.com/pandas-dev/pandas/issues/15969
         self._win_type = None if isinstance(self.window, int) else "freq"
+
+        if self.axis in ("index", 1, "rows"):
+            warnings.warn(
+                "Using axis=1 in Rolling has been deprecated and will be removed "
+                "in a future version.",
+                FutureWarning,
+            )
 
     def _rolling_kwargs(self):
         kwargs = {
