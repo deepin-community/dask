@@ -1,0 +1,11 @@
+--- a/docs/source/index.rst
++++ b/docs/source/index.rst
+@@ -171,7 +171,7 @@
+             .. grid-item::
+                 :columns: 12 12 5 5
+ 
+-                .. figure:: https://docs.xarray.dev/en/stable/_static/logos/Xarray_Logo_RGB_Final.png
++                .. figure:: images/Xarray_Logo_RGB_Final.png
+                    :align: center
+ 
+     .. tab-item:: Bags

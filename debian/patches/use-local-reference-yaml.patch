@@ -3,9 +3,9 @@ Description: Use local files for building documentation instead of
  downloading them from github.
 Forwarded: no
 
---- a/docs/source/configuration.rst
-+++ b/docs/source/configuration.rst
-@@ -452,8 +452,8 @@ Dask
+--- dask.orig/docs/source/configuration.rst
++++ dask/docs/source/configuration.rst
+@@ -465,8 +465,8 @@
  
  .. dask-config-block::
      :location: dask
@@ -16,7 +16,7 @@ Forwarded: no
  
  
  Distributed Client
-@@ -461,16 +461,16 @@ Distributed Client
+@@ -474,16 +474,16 @@
  
  .. dask-config-block::
      :location: distributed.client
@@ -37,7 +37,7 @@ Forwarded: no
  
  
  Distributed Dashboard
-@@ -478,8 +478,8 @@ Distributed Dashboard
+@@ -491,8 +491,8 @@
  
  .. dask-config-block::
      :location: distributed.dashboard
@@ -48,7 +48,7 @@ Forwarded: no
  
  
  Distributed Deploy
-@@ -487,8 +487,8 @@ Distributed Deploy
+@@ -500,8 +500,8 @@
  
  .. dask-config-block::
      :location: distributed.deploy
@@ -59,7 +59,7 @@ Forwarded: no
  
  
  Distributed Scheduler
-@@ -496,8 +496,8 @@ Distributed Scheduler
+@@ -509,8 +509,8 @@
  
  .. dask-config-block::
      :location: distributed.scheduler
@@ -70,7 +70,7 @@ Forwarded: no
  
  
  Distributed Worker
-@@ -505,8 +505,8 @@ Distributed Worker
+@@ -518,8 +518,8 @@
  
  .. dask-config-block::
      :location: distributed.worker
@@ -81,7 +81,7 @@ Forwarded: no
  
  
  Distributed Nanny
-@@ -514,8 +514,8 @@ Distributed Nanny
+@@ -527,8 +527,8 @@
  
  .. dask-config-block::
      :location: distributed.nanny
@@ -92,7 +92,7 @@ Forwarded: no
  
  
  Distributed Admin
-@@ -523,8 +523,8 @@ Distributed Admin
+@@ -536,8 +536,8 @@
  
  .. dask-config-block::
      :location: distributed.admin
@@ -103,7 +103,7 @@ Forwarded: no
  
  
  Distributed RMM
-@@ -532,5 +532,5 @@ Distributed RMM
+@@ -545,5 +545,5 @@
  
  .. dask-config-block::
      :location: distributed.rmm

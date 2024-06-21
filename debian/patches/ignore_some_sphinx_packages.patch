@@ -1,14 +1,20 @@
-Description: Don't tryy to use Sphinx extensions we don't have
+Subject: Don't try to use Sphinx extensions we don't have
 
-sphinx_autosummary_accessors, sphinx_design are not packaged;
+sphinx_autosummary_accessors is not packaged;
 jupyter_sphinx is but probably doesn't work.
 
 Author: Andreas Tille <tille@debian.org>, Rebecca N. Palmer
 Last-Update: Fri, 13 Jan 2023 11:20:28 +0100
+---
+ docs/requirements-docs.txt         | 10 ----------
+ docs/source/10-minutes-to-dask.rst |  8 ++++----
+ docs/source/conf.py                |  8 ++++----
+ docs/source/scheduling.rst         |  2 +-
+ 4 files changed, 9 insertions(+), 19 deletions(-)
 
---- a/docs/requirements-docs.txt
-+++ b/docs/requirements-docs.txt
-@@ -4,14 +4,11 @@
+--- dask.orig/docs/requirements-docs.txt
++++ dask/docs/requirements-docs.txt
+@@ -4,22 +4,11 @@
  sphinx-click
  sphinx-copybutton
  sphinx-remove-toctrees
@@ -16,57 +22,24 @@ Last-Update: Fri, 13 Jan 2023 11:20:28 +0100
  sphinx-tabs
  sphinx-design
 -jupyter_sphinx
+-# FIXME: `sphinxcontrib-*` pins are a workaround until we have sphinx>=5.
+-#        See https://github.com/dask/dask-sphinx-theme/issues/68.
+-sphinxcontrib-applehelp>=1.0.0,<1.0.7
+-sphinxcontrib-devhelp>=1.0.0,<1.0.6
+-sphinxcontrib-htmlhelp>=2.0.0,<2.0.5
+-sphinxcontrib-serializinghtml>=1.1.0,<1.1.10
+-sphinxcontrib-qthelp>=1.0.0,<1.0.7
  toolz
  cloudpickle>=1.5.0
  pandas>=1.4.0
 -git+https://github.com/dask/distributed
+-git+https://github.com/dask-contrib/dask-expr
  fsspec
  scipy
  pytest
---- a/docs/source/conf.py
-+++ b/docs/source/conf.py
-@@ -18,7 +18,7 @@
- # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
- import sys
- 
--import sphinx_autosummary_accessors
-+# import sphinx_autosummary_accessors
- 
- # -- General configuration -----------------------------------------------------
- 
-@@ -37,7 +37,7 @@
-     "sphinx.ext.mathjax",
-     "sphinx.ext.intersphinx",
-     "sphinx.ext.autosummary",
--    "sphinx_autosummary_accessors",
-+#    "sphinx_autosummary_accessors",
-     "sphinx.ext.extlinks",
-     "sphinx.ext.viewcode",
-     "numpydoc",
-@@ -47,9 +47,9 @@
-     "sphinx_remove_toctrees",
-     "IPython.sphinxext.ipython_console_highlighting",
-     "IPython.sphinxext.ipython_directive",
--    "jupyter_sphinx",
-+#    "jupyter_sphinx",
-     "sphinx_copybutton",
--    "sphinx_design",
-+#    "sphinx_design",
- ]
- 
- copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
-@@ -66,7 +66,7 @@
- mathjax_path = 'file:///usr/share/javascript/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
- 
- # Add any paths that contain templates here, relative to this directory.
--templates_path = ["_templates", sphinx_autosummary_accessors.templates_path]
-+#templates_path = ["_templates", sphinx_autosummary_accessors.templates_path]
- 
- # The suffix of source filenames.
- source_suffix = ".rst"
---- a/docs/source/10-minutes-to-dask.rst
-+++ b/docs/source/10-minutes-to-dask.rst
-@@ -88,7 +88,7 @@
+--- dask.orig/docs/source/10-minutes-to-dask.rst
++++ dask/docs/source/10-minutes-to-dask.rst
+@@ -91,7 +91,7 @@
  
        See :doc:`array`.
  
@@ -75,7 +48,7 @@ Last-Update: Fri, 13 Jan 2023 11:20:28 +0100
  
           import numpy as np
           import dask.array as da
-@@ -102,12 +102,12 @@
+@@ -105,12 +105,12 @@
  
        Here are some key properties of a Dask Array:
  
@@ -90,39 +63,55 @@ Last-Update: Fri, 13 Jan 2023 11:20:28 +0100
              
           # access a particular block of data
           a.blocks[1, 3]
-@@ -158,7 +158,7 @@
+@@ -164,7 +164,7 @@
+    .. tab-item:: Array
+       :sync: array
  
-    .. group-tab:: Array
+-      .. jupyter-execute::
++      .. code-block:: python
  
--    .. jupyter-execute::
-+    .. code-block:: python
+          a[:50, 200]
  
-        a[:50, 200]
+--- dask.orig/docs/source/conf.py
++++ dask/docs/source/conf.py
+@@ -22,7 +22,7 @@
+ # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+ import sys
  
---- a/docs/source/dataframe.rst
-+++ b/docs/source/dataframe.rst
-@@ -62,9 +62,7 @@
- subset of the ``pd.DataFrame`` API, it should be familiar to pandas users.
- There are some slight alterations due to the parallel nature of Dask:
+-import sphinx_autosummary_accessors
++# import sphinx_autosummary_accessors
  
--.. grid:: 2
--
--    .. grid-item-card:: Dask DataFrame API
-+Dask DataFrame API
+ # -- General configuration -----------------------------------------------------
  
-         .. code-block:: python
+@@ -41,7 +41,7 @@
+     "sphinx.ext.mathjax",
+     "sphinx.ext.intersphinx",
+     "sphinx.ext.autosummary",
+-    "sphinx_autosummary_accessors",
++#    "sphinx_autosummary_accessors",
+     "sphinx.ext.extlinks",
+     "sphinx.ext.viewcode",
+     "numpydoc",
+@@ -51,7 +51,7 @@
+     "sphinx_remove_toctrees",
+     "IPython.sphinxext.ipython_console_highlighting",
+     "IPython.sphinxext.ipython_directive",
+-    "jupyter_sphinx",
++#    "jupyter_sphinx",
+     "sphinx_copybutton",
+     "sphinx_design",
+ ]
+@@ -70,7 +70,7 @@
+ mathjax_path = 'file:///usr/share/javascript/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
  
-@@ -85,7 +83,7 @@
-             3    5
-             Name: x, dtype: int64
+ # Add any paths that contain templates here, relative to this directory.
+-templates_path = ["_templates", sphinx_autosummary_accessors.templates_path]
++#templates_path = ["_templates", sphinx_autosummary_accessors.templates_path]
  
--    .. grid-item-card:: pandas DataFrame API
-+pandas DataFrame API
- 
-         .. code-block:: python
- 
---- a/docs/source/scheduling.rst
-+++ b/docs/source/scheduling.rst
+ # The suffix of source filenames.
+ source_suffix = ".rst"
+--- dask.orig/docs/source/scheduling.rst
++++ dask/docs/source/scheduling.rst
 @@ -244,7 +244,7 @@
  This import initialization can lead to subprocesses recursively creating other subprocesses
  and eventually an error is raised.

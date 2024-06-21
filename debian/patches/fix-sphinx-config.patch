@@ -1,0 +1,20 @@
+Description: Fix sphinx configuration
+Forwarded: https://github.com/dask/distributed/pull/8434
+Author: Julian Gilbey <jdg@debian.org>
+Last-Update: 2023-12-31
+
+--- dask.orig/docs/source/conf.py
++++ dask/docs/source/conf.py
+@@ -319,9 +319,9 @@
+ # epub_tocdup = True
+ 
+ extlinks = {
+-    "issue": ("https://github.com/dask/dask/issues/%s", "GH#"),
+-    "pr": ("https://github.com/dask/dask/pull/%s", "GH#"),
+-    "pr-distributed": ("https://github.com/dask/distributed/pull/%s", "GH#"),
++    "issue": ("https://github.com/dask/dask/issues/%s", "GH#%s"),
++    "pr": ("https://github.com/dask/dask/pull/%s", "GH#%s"),
++    "pr-distributed": ("https://github.com/dask/distributed/pull/%s", "GH#%s"),
+ }
+ 
+ #  --Options for sphinx extensions -----------------------------------------------
