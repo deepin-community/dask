@@ -165,6 +165,8 @@ Top level functions
    nanmedian
    nanmin
    nanprod
+   nanquantile
+   nanpercentile
    nanstd
    nansum
    nanvar
@@ -179,12 +181,14 @@ Top level functions
    outer
    pad
    percentile
+   push
    ~core.PerformanceWarning
    piecewise
    positive
    power
    prod
    ptp
+   quantile
    rad2deg
    radians
    ravel
@@ -197,6 +201,7 @@ Top level functions
    remainder
    repeat
    reshape
+   reshape_blockwise
    result_type
    right_shift
    rint
@@ -207,6 +212,7 @@ Top level functions
    searchsorted
    select
    shape
+   shuffle
    sign
    signbit
    sin
@@ -300,6 +306,7 @@ Array
    Array.reshape
    Array.round
    Array.shape
+   Array.shuffle
    Array.size
    Array.squeeze
    Array.std

@@ -21,8 +21,9 @@ import tlz as toolz
 
 import dask
 from dask import config
-from dask.base import clone_key, flatten, is_dask_collection, normalize_token
+from dask.base import clone_key, flatten, is_dask_collection
 from dask.core import keys_in_tasks, reverse_dict
+from dask.tokenize import normalize_token
 from dask.typing import DaskCollection, Graph, Key
 from dask.utils import ensure_dict, import_required, key_split
 from dask.widgets import get_template
@@ -826,8 +827,8 @@ class HighLevelGraph(Graph):
         for k in dep_key1:
             if self.dependencies[k] != dependencies[k]:
                 raise ValueError(
-                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
-                    f"expected {repr(dependencies[k])}"
+                    f"incorrect HLG dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])} from task dependencies"
                 )
 
     def __repr__(self) -> str:

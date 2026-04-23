@@ -11,22 +11,21 @@ import tempfile
 import types
 import uuid
 import warnings
-from collections.abc import Hashable, Iterable, Iterator, Mapping, Set
+from collections.abc import Callable, Hashable, Iterable, Iterator, Mapping, Set
 from contextlib import contextmanager, nullcontext, suppress
 from datetime import datetime, timedelta
 from errno import ENOENT
-from functools import lru_cache, wraps
+from functools import wraps
 from importlib import import_module
 from numbers import Integral, Number
 from operator import add
 from threading import Lock
-from typing import Any, Callable, ClassVar, Literal, TypeVar, cast, overload
+from typing import Any, ClassVar, Literal, TypeVar, cast, overload
 from weakref import WeakValueDictionary
 
 import tlz as toolz
 
 from dask import config
-from dask.core import get_deps
 from dask.typing import no_default
 
 K = TypeVar("K")
@@ -1161,20 +1160,6 @@ def insert(tup, loc, val):
     return tuple(L)
 
 
-def dependency_depth(dsk):
-    deps, _ = get_deps(dsk)
-
-    @lru_cache(maxsize=None)
-    def max_depth_by_deps(key):
-        if not deps[key]:
-            return 1
-
-        d = 1 + max(max_depth_by_deps(dep_key) for dep_key in deps[key])
-        return d
-
-    return max(max_depth_by_deps(dep_key) for dep_key in deps.keys())
-
-
 def memory_repr(num):
     for x in ["bytes", "KB", "MB", "GB", "TB"]:
         if num < 1024.0:
@@ -1832,15 +1817,13 @@ timedelta_sizes.update({k.upper(): v for k, v in timedelta_sizes.items()})
 
 
 @overload
-def parse_timedelta(s: None, default: str | Literal[False] = "seconds") -> None:
-    ...
+def parse_timedelta(s: None, default: str | Literal[False] = "seconds") -> None: ...
 
 
 @overload
 def parse_timedelta(
     s: str | float | timedelta, default: str | Literal[False] = "seconds"
-) -> float:
-    ...
+) -> float: ...
 
 
 def parse_timedelta(s, default="seconds"):
@@ -2081,29 +2064,6 @@ def stringify(obj, exclusive: Iterable | None = None):
     return obj
 
 
-def stringify_collection_keys(obj):
-    """Convert all collection keys in ``obj`` to strings.
-
-    This is a specialized version of ``stringify()`` that only converts keys
-    of the form: ``("a string", ...)``
-    """
-
-    typ = type(obj)
-    if typ is tuple and obj:
-        obj0 = obj[0]
-        if type(obj0) is str or type(obj0) is bytes:
-            return stringify(obj)
-        if callable(obj0):
-            return (obj0,) + tuple(stringify_collection_keys(x) for x in obj[1:])
-    if typ is list:
-        return [stringify_collection_keys(v) for v in obj]
-    if typ is dict:
-        return {k: stringify_collection_keys(v) for k, v in obj.items()}
-    if typ is tuple:  # If the tuple itself isn't a key, check its elements
-        return tuple(stringify_collection_keys(v) for v in obj)
-    return obj
-
-
 class cached_property(functools.cached_property):
     """Read only version of functools.cached_property."""
 
@@ -2140,6 +2100,37 @@ def _cumsum(seq, initial_zero):
         return tuple(toolz.accumulate(add, seq, 0))
     else:
         return tuple(toolz.accumulate(add, seq))
+
+
+@functools.lru_cache
+def _max(seq):
+    if isinstance(seq, _HashIdWrapper):
+        seq = seq.wrapped
+    return max(seq)
+
+
+def cached_max(seq):
+    """Compute max with caching.
+
+    Caching is by the identity of `seq` rather than the value. It is thus
+    important that `seq` is a tuple of immutable objects, and this function
+    is intended for use where `seq` is a value that will persist (generally
+    block sizes).
+
+    Parameters
+    ----------
+    seq : tuple
+        Values to reduce
+
+    Returns
+    -------
+    tuple
+    """
+    assert isinstance(seq, tuple)
+    # Look up by identity first, to avoid a linear-time __hash__
+    # if we've seen this tuple object before.
+    result = _max(_HashIdWrapper(seq))
+    return result
 
 
 def cached_cumsum(seq, initial_zero=False):
@@ -2317,3 +2308,11 @@ class shorten_traceback:
         #     return exc_tb.tb_next
 
         return exc_tb
+
+
+def unzip(ls, nout):
+    """Unzip a list of lists into ``nout`` outputs."""
+    out = list(zip(*ls))
+    if not out:
+        out = [()] * nout
+    return out

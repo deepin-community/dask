@@ -1,0 +1,23 @@
+From: Colin Watson <cjwatson@debian.org>
+Date: Mon, 6 Jan 2025 11:57:43 +0000
+Subject: Don't fail test_nanquantile_all_nan if RuntimeWarning is not raised
+
+Last-Update: 2025-01-06
+---
+ dask/array/tests/test_reductions.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/dask/array/tests/test_reductions.py b/dask/array/tests/test_reductions.py
+index 4b1e722..6de4f98 100644
+--- a/dask/array/tests/test_reductions.py
++++ b/dask/array/tests/test_reductions.py
+@@ -965,7 +965,8 @@ def test_nanquantile_all_nan():
+     arr[:] = np.nan
+     darr = da.from_array(arr, chunks=(2, 3, 4, -1))
+     da.nanquantile(darr, 0.75, axis=-1).compute()
+-    with pytest.raises(RuntimeWarning):
++    with warnings.catch_warnings():
++        warnings.simplefilter("ignore", RuntimeWarning)
+         assert_eq(
+             da.nanquantile(darr, 0.75, axis=-1), np.nanquantile(arr, 0.75, axis=-1)
+         )

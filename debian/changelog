@@ -1,3 +1,31 @@
+dask (2024.12.1+dfsg-3) unstable; urgency=medium
+
+  * Team upload.
+  * Drop python3-importlib-metadata build-dependency
+  * Disable useless Salsa CI jobs
+  * Drop "Rules-Requires-Root: no": it is the default now
+  * Bump Standards-Version to 4.7.4, drop Priority: tag
+
+ -- Alexandre Detiste <tchet@debian.org>  Mon, 06 Apr 2026 00:03:02 +0200
+
+dask (2024.12.1+dfsg-2) unstable; urgency=medium
+
+  * Team upload.
+  * Skip test_reductions_out[product] with numpy >= 2 (closes: #1095019).
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 04 Feb 2025 10:15:05 +0000
+
+dask (2024.12.1+dfsg-1) unstable; urgency=medium
+
+  * Team upload.
+  * New upstream release:
+    - Add support for Python 3.13 (closes: #1088234).
+  * Disable dask theme for now, until #1085947 is fixed (closes: #1091016).
+  * Skip some tests that require pyarrow.
+  * Don't fail test_nanquantile_all_nan if RuntimeWarning is not raised.
+
+ -- Colin Watson <cjwatson@debian.org>  Mon, 06 Jan 2025 15:41:08 +0000
+
 dask (2024.5.2+dfsg-1) unstable; urgency=medium
 
   [ Étienne Mollier ]

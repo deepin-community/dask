@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import os
 from collections.abc import Mapping
+from functools import partial
 from io import BytesIO
 from warnings import catch_warnings, simplefilter, warn
+
+from dask._task_spec import convert_legacy_task
 
 try:
     import psutil
@@ -25,6 +28,7 @@ from pandas.api.types import (
     is_object_dtype,
 )
 
+import dask.dataframe as dd
 from dask.base import tokenize
 from dask.bytes import read_bytes
 from dask.core import flatten
@@ -368,7 +372,7 @@ def text_blocks_to_pandas(
 
     if path:
         colname, path_converter = path
-        paths = [b[1].path for b in blocks]
+        paths = [b.args[0].path for b in blocks]
         if path_converter:
             paths = [path_converter(p) for p in paths]
         head = head.assign(
@@ -386,6 +390,31 @@ def text_blocks_to_pandas(
     # Define parts
     parts = []
     colname, paths = path or (None, None)
+
+    if dd._dask_expr_enabled():
+        for i in range(len(blocks)):
+            parts.append([paths[i] if paths else None, is_first[i], is_last[i]])
+
+        return dd.from_map(
+            partial(
+                _read_csv,
+                full_columns=columns,
+                colname=colname,
+                head=head,
+                header=header,
+                reader=reader,
+                dtypes=dtypes,
+                enforce=enforce,
+                kwargs=kwargs,
+                blocksize=blocksize,
+            ),
+            blocks,
+            parts,
+            meta=head,
+            label="read-csv",
+            enforce_metadata=False,
+        )
+
     for i in range(len(blocks)):
         parts.append([blocks[i], paths[i] if paths else None, is_first[i], is_last[i]])
 
@@ -409,6 +438,77 @@ def text_blocks_to_pandas(
         enforce_metadata=False,
         produces_tasks=True,
     )
+
+
+def _read_csv(
+    block,
+    part,
+    columns,
+    *,
+    reader,
+    header,
+    dtypes,
+    head,
+    colname,
+    full_columns,
+    enforce,
+    kwargs,
+    blocksize,
+):
+    # Part will be a 3-element tuple
+    path, is_first, is_last = part
+
+    # Construct `path_info`
+    if path is not None:
+        path_info = (
+            colname,
+            path,
+            sorted(list(head[colname].cat.categories)),
+        )
+    else:
+        path_info = None
+
+    # Deal with arguments that are special
+    # for the first block of each file
+    write_header = False
+    rest_kwargs = kwargs.copy()
+    if not is_first:
+        if rest_kwargs.get("names", None) is None:
+            write_header = True
+        rest_kwargs.pop("skiprows", None)
+        if rest_kwargs.get("header", 0) is not None:
+            rest_kwargs.pop("header", None)
+    if not is_last:
+        rest_kwargs.pop("skipfooter", None)
+
+    # Deal with column projection
+    _columns = full_columns
+    project_after_read = False
+    if columns is not None and columns != full_columns:
+        if kwargs:
+            # To be safe, if any kwargs are defined, avoid
+            # changing `usecols` here. Instead, we can just
+            # select columns after the read
+            project_after_read = True
+        else:
+            _columns = columns
+            rest_kwargs["usecols"] = _columns
+
+    # Call `pandas_read_text`
+    df = pandas_read_text(
+        reader,
+        block,
+        header,
+        rest_kwargs,
+        dtypes,
+        _columns,
+        write_header,
+        enforce,
+        path_info,
+    )
+    if project_after_read:
+        return df[columns]
+    return df
 
 
 def block_mask(block_lists):
@@ -663,7 +763,13 @@ def read_pandas(
             if is_integer_dtype(head[c].dtype) and c not in specified_dtypes:
                 head[c] = head[c].astype(float)
 
-    values = [[list(dsk.dask.values()) for dsk in block] for block in values]
+    values = [
+        [
+            [convert_legacy_task(k, ts, {}) for k, ts in dsk.dask.items()]
+            for dsk in block
+        ]
+        for block in values
+    ]
 
     return text_blocks_to_pandas(
         reader,

@@ -9,10 +9,9 @@ import numpy as np
 from tlz import merge
 
 from dask.array.core import Array
-from dask.array.numpy_compat import NUMPY_GE_122
-from dask.array.numpy_compat import percentile as np_percentile
 from dask.base import tokenize
 from dask.highlevelgraph import HighLevelGraph
+from dask.utils import derived_from
 
 
 @wraps(np.percentile)
@@ -23,7 +22,7 @@ def _percentile(a, q, method="linear"):
     if isinstance(q, Iterator):
         q = list(q)
     if a.dtype.name == "category":
-        result = np_percentile(a.cat.codes, q, method=method)
+        result = np.percentile(a.cat.codes, q, method=method)
         import pandas as pd
 
         return pd.Categorical.from_codes(result, a.dtype.categories, a.dtype.ordered), n
@@ -36,22 +35,17 @@ def _percentile(a, q, method="linear"):
     if np.issubdtype(a.dtype, np.datetime64):
         values = a
         if type(a).__name__ in ("Series", "Index"):
-            from dask.dataframe._compat import PANDAS_GE_200
-
-            if PANDAS_GE_200:
-                a2 = values.astype("i8")
-            else:
-                a2 = values.view("i8")
+            a2 = values.astype("i8")
         else:
             a2 = values.view("i8")
-        result = np_percentile(a2, q, method=method).astype(values.dtype)
+        result = np.percentile(a2, q, method=method).astype(values.dtype)
         if q[0] == 0:
             # https://github.com/dask/dask/issues/6864
             result[0] = min(result[0], values.min())
         return result, n
     if not np.issubdtype(a.dtype, np.number):
         method = "nearest"
-    return np_percentile(a, q, method=method), n
+    return np.percentile(a, q, method=method), n
 
 
 def _tdigest_chunk(a):
@@ -114,24 +108,28 @@ def percentile(a, q, method="linear", internal_method="default", **kwargs):
     numpy.percentile : Numpy's equivalent Percentile function
     """
     from dask.array.dispatch import percentile_lookup as _percentile
+    from dask.array.reductions import quantile
     from dask.array.utils import array_safe, meta_from_array
+
+    if a.ndim > 1:
+        q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
+
+        return quantile(a, q, method=method, **kwargs)
 
     allowed_internal_methods = ["default", "dask", "tdigest"]
 
     if method in allowed_internal_methods:
         warnings.warn(
-            "In Dask 2022.1.0, the `method=` argument was renamed to `internal_method=`",
+            "The `method=` argument was renamed to `internal_method=`",
             FutureWarning,
         )
         internal_method = method
 
     if "interpolation" in kwargs:
-        if NUMPY_GE_122:
-            warnings.warn(
-                "In Dask 2022.1.0, the `interpolation=` argument to percentile was renamed to "
-                "`method= ` ",
-                FutureWarning,
-            )
+        warnings.warn(
+            "The `interpolation=` argument to percentile was renamed to " "`method= ` ",
+            FutureWarning,
+        )
         method = kwargs.pop("interpolation")
 
     if kwargs:
@@ -318,3 +316,12 @@ def merge_percentiles(finalq, qs, vals, method="lower", Ns=None, raise_on_nan=Tr
                 "'higher', 'midpoint', or 'nearest'"
             )
     return rv
+
+
+@derived_from(np)
+def nanpercentile(a, q, **kwargs):
+    from dask.array.reductions import nanquantile
+
+    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
+
+    return nanquantile(a, q, **kwargs)

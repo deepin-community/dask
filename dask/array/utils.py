@@ -10,7 +10,6 @@ import warnings
 import numpy as np
 from tlz import concat, frequencies
 
-from dask.array.core import Array
 from dask.array.numpy_compat import AxisError
 from dask.base import is_dask_collection, tokenize
 from dask.highlevelgraph import HighLevelGraph
@@ -62,11 +61,11 @@ def meta_from_array(x, ndim=None, dtype=None):
 
     if isinstance(x, list) or isinstance(x, tuple):
         ndims = [
-            0
-            if isinstance(a, numbers.Number)
-            else a.ndim
-            if hasattr(a, "ndim")
-            else len(a)
+            (
+                0
+                if isinstance(a, numbers.Number)
+                else a.ndim if hasattr(a, "ndim") else len(a)
+            )
             for a in x
         ]
         a = [a if nd == 0 else meta_from_array(a, nd) for a, nd in zip(x, ndims)]
@@ -213,13 +212,18 @@ def _check_dsk(dsk):
     non_one = {k: v for k, v in freqs.items() if v != 1}
     key_collisions = set()
     # Allow redundant keys if the values are equivalent
+    collisions = set()
     for k in non_one.keys():
         for layer in dsk.layers.values():
             try:
                 key_collisions.add(tokenize(layer[k]))
             except KeyError:
                 pass
-    assert len(key_collisions) < 2, non_one
+        if len(key_collisions) >= 2:
+            collisions.add(k)
+        key_collisions.clear()
+
+    assert len(collisions) == 0, {k: non_one[k] for k in collisions}
 
 
 def assert_eq_shape(a, b, check_ndim=True, check_nan=True):
@@ -435,6 +439,8 @@ def arange_safe(*args, like, **kwargs):
 
 
 def _array_like_safe(np_func, da_func, a, like, **kwargs):
+    from dask.array.core import Array
+
     if like is a and hasattr(a, "__array_function__"):
         return a
 

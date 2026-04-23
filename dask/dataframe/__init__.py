@@ -3,21 +3,39 @@ from __future__ import annotations
 import importlib
 import warnings
 
-from packaging.version import Version
+# The "dataframe.query-planning" config can only be processed once
+DASK_EXPR_ENABLED: bool | None = None
 
 
 def _dask_expr_enabled() -> bool:
-    import pandas as pd
-
     import dask
 
+    global DASK_EXPR_ENABLED
+
     use_dask_expr = dask.config.get("dataframe.query-planning")
-    if (
-        use_dask_expr is False
-        or use_dask_expr is None
-        and Version(pd.__version__).major < 2
-    ):
-        return False
+
+    if DASK_EXPR_ENABLED is not None:
+        if (use_dask_expr is True and DASK_EXPR_ENABLED is False) or (
+            use_dask_expr is False and DASK_EXPR_ENABLED is True
+        ):
+            warnings.warn(
+                "The 'dataframe.query-planning' config is now set to "
+                f"{use_dask_expr}, but query planning is already "
+                f"{'enabled' if DASK_EXPR_ENABLED else 'disabled'}. "
+                "The query-planning config can only be changed before "
+                "`dask.dataframe` is first imported!"
+            )
+        return DASK_EXPR_ENABLED
+
+    if use_dask_expr is False:
+        warnings.warn(
+            "The legacy Dask DataFrame implementation is deprecated and will "
+            "be removed in a future version. Set the configuration option "
+            "`dataframe.query-planning` to `True` or None to enable the new Dask "
+            "Dataframe implementation and silence this warning.",
+            FutureWarning,
+        )
+        return (DASK_EXPR_ENABLED := False)
     try:
         import dask_expr  # noqa: F401
     except ImportError:
@@ -29,10 +47,10 @@ This will raise in a future version.
 """
         if use_dask_expr is None:
             warnings.warn(msg, FutureWarning)
-            return False
+            return (DASK_EXPR_ENABLED := False)
         else:
             raise ImportError(msg)
-    return True
+    return (DASK_EXPR_ENABLED := True)
 
 
 try:
@@ -120,11 +138,9 @@ if _dask_expr_enabled():
             concat,
             from_array,
             from_dask_array,
-            from_dask_dataframe,
             from_delayed,
             from_dict,
             from_graph,
-            from_legacy_dataframe,
             from_map,
             from_pandas,
             get_collection_type,

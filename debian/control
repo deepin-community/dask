@@ -2,7 +2,6 @@ Source: dask
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Diane Trout <diane@ghic.org>
 Section: python
-Priority: optional
 Build-Depends: debhelper-compat (= 13),
                dh-python,
                node-js-yaml <!nodoc>,
@@ -16,7 +15,6 @@ Build-Depends: debhelper-compat (= 13),
                python3-distributed (>= 2023.12.1) <!nodoc>,
                python3-doc <!nodoc>,
                python3-fsspec,
-               python3-importlib-metadata <!nodoc>,
                python3-ipython <!nodoc>,
                python3-numpydoc <!nodoc>,
                python3-pandas (>= 1.3) <!nodoc>,
@@ -34,11 +32,10 @@ Build-Depends: debhelper-compat (= 13),
                python3-versioneer,
                sphinx-common,
                tzdata-legacy,
-Standards-Version: 4.7.0
+Standards-Version: 4.7.4
 Vcs-Browser: https://salsa.debian.org/python-team/packages/dask
 Vcs-Git: https://salsa.debian.org/python-team/packages/dask.git
 Homepage: https://github.com/dask/dask
-Rules-Requires-Root: no
 
 Package: python3-dask
 Architecture: all

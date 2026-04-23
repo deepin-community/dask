@@ -34,10 +34,11 @@ from dask.base import (
     unpack_collections,
     visualize,
 )
+from dask.core import validate_key
 from dask.delayed import Delayed, delayed
 from dask.diagnostics import Profiler
 from dask.highlevelgraph import HighLevelGraph
-from dask.utils import tmpdir, tmpfile
+from dask.utils import key_split, tmpdir, tmpfile
 from dask.utils_test import dec, import_or_none, inc
 
 da = import_or_none("dask.array")
@@ -370,7 +371,7 @@ def test_compute_no_opt():
     # Otherwise, the lengths below would be 4 and 0.
     assert len([k for k in keys if "mul" in k[0]]) == 8
     assert len([k for k in keys if "add" in k[0]]) == 4
-    assert len([k for k in keys if "add-mul" in k[0]]) == 4  # See? Renamed
+    assert len([k for k in keys if "add-from_sequence-mul" in k[0]]) == 4
 
 
 @pytest.mark.skipif("not da")
@@ -1006,20 +1007,17 @@ def test_optimizations_ctd():
     dsk1 = collections_to_dsk([x])
     with dask.config.set({"optimizations": [lambda dsk, keys: dsk]}):
         dsk2 = collections_to_dsk([x])
-
     assert dsk1 == dsk2
 
 
 def test_clone_key():
-    assert clone_key("inc-1-2-3", 123) == "inc-73db79fdf4518507ddc84796726d4844"
-    assert clone_key("x", 123) == "x-c4fb64ccca807af85082413d7ef01721"
-    assert clone_key("x", 456) == "x-d4b538b4d4cf68fca214077609feebae"
-    assert clone_key(("x", 1), 456) == ("x-d4b538b4d4cf68fca214077609feebae", 1)
-    assert clone_key(("sum-1-2-3", h1, 1), 123) == (
-        "sum-822e7622aa1262cef988b3033c32aa37",
-        h1,
-        1,
-    )
+    for key, seed in [("x", 123), (("x", 1), 456), (("sum-1-2-3", h1, 1), 123)]:
+        validate_key(clone_key(key, seed))
+        assert clone_key(key, seed) != key
+        assert clone_key(key, seed) == clone_key(key, seed)
+        assert clone_key(key, seed) != clone_key(key, seed + 1)
+        assert key_split(clone_key(key, seed)) == key_split(key)
+
     with pytest.raises(TypeError):
         clone_key(1, 2)
 

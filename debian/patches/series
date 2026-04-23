@@ -8,7 +8,9 @@ ignore_some_sphinx_packages.patch
 js-yaml.patch
 verbatim-sphinx-ipython.patch
 fix-sphinx-config.patch
-fix-test_accessors.patch
 use-local-xarray-logo.patch
 disable-dask-expr-docs.patch
 cleanup-some-privacy-breaches.patch
+disable-dask-theme.patch
+test_nanquantile_all_nan-allow-no-warning.patch
+numpy-2.0.patch

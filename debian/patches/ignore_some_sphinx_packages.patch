@@ -4,13 +4,13 @@ sphinx_autosummary_accessors is not packaged;
 jupyter_sphinx is but probably doesn't work.
 
 Author: Andreas Tille <tille@debian.org>, Rebecca N. Palmer
-Last-Update: Fri, 13 Jan 2023 11:20:28 +0100
+Last-Update: 2025-01-05
 ---
- docs/requirements-docs.txt         | 10 ----------
+ docs/requirements-docs.txt         | 11 -----------
  docs/source/10-minutes-to-dask.rst |  8 ++++----
  docs/source/conf.py                |  8 ++++----
  docs/source/scheduling.rst         |  2 +-
- 4 files changed, 9 insertions(+), 19 deletions(-)
+ 4 files changed, 9 insertions(+), 20 deletions(-)
 
 --- dask.orig/docs/requirements-docs.txt
 +++ dask/docs/requirements-docs.txt
@@ -31,7 +31,7 @@ Last-Update: Fri, 13 Jan 2023 11:20:28 +0100
 -sphinxcontrib-qthelp>=1.0.0,<1.0.7
  toolz
  cloudpickle>=1.5.0
- pandas>=1.4.0
+ pandas>=2.0.0
 -git+https://github.com/dask/distributed
 -git+https://github.com/dask-contrib/dask-expr
  fsspec

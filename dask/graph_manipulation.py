@@ -2,12 +2,14 @@
 output collections produced by this module are typically not functionally equivalent to
 their inputs.
 """
+
 from __future__ import annotations
 
 import uuid
 from collections.abc import Callable, Hashable
 from typing import Literal, TypeVar
 
+from dask._task_spec import List, TaskRef
 from dask.base import (
     clone_key,
     get_collection_names,
@@ -176,7 +178,11 @@ def _build_map_layer(
         except AttributeError:
             numblocks = (collection.npartitions,)
         indices = tuple(i for i, _ in enumerate(numblocks))
-        kwargs = {"_deps": [d.key for d in dependencies]} if dependencies else {}
+        kwargs = (
+            {"_deps": List(*[TaskRef(d.key) for d in dependencies])}
+            if dependencies
+            else {}
+        )
 
         return blockwise(
             func,
