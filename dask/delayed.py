@@ -22,27 +22,22 @@ from dask.base import tokenize as _tokenize
 from dask.context import globalmethod
 from dask.core import flatten, quote
 from dask.highlevelgraph import HighLevelGraph
+from dask.optimization import fuse
 from dask.typing import Graph, NestedKeys
 from dask.utils import (
     OperatorMethodMixin,
     apply,
+    ensure_dict,
     funcname,
     is_namedtuple_instance,
     methodcaller,
+    unzip,
 )
 
 __all__ = ["Delayed", "delayed"]
 
 
 DEFAULT_GET = named_schedulers.get("threads", named_schedulers["sync"])
-
-
-def unzip(ls, nout):
-    """Unzip a list of lists into ``nout`` outputs."""
-    out = list(zip(*ls))
-    if not out:
-        out = [()] * nout
-    return out
 
 
 def finalize(collection):
@@ -91,10 +86,15 @@ def unpack_collections(expr):
     >>> collections
     (Delayed('a'), Delayed('b'))
     """
+    # FIXME: See blockwise._unpack_collections for a TaskSpec version
     if isinstance(expr, Delayed):
         return expr._key, (expr,)
 
     if is_dask_collection(expr):
+        if hasattr(expr, "optimize"):
+            # Optimize dask-expr collections
+            expr = expr.optimize()
+
         finalized = finalize(expr)
         return finalized._key, (finalized,)
 
@@ -141,16 +141,17 @@ def unpack_collections(expr):
                 if hasattr(expr, f.name)
             }
             replace(expr, **_fields)
-        except TypeError as e:
-            raise TypeError(
-                f"Failed to unpack {typ} instance. "
-                "Note that using a custom __init__ is not supported."
-            ) from e
-        except ValueError as e:
-            raise ValueError(
-                f"Failed to unpack {typ} instance. "
-                "Note that using fields with `init=False` are not supported."
-            ) from e
+        except (TypeError, ValueError) as e:
+            if isinstance(e, ValueError) or "is declared with init=False" in str(e):
+                raise ValueError(
+                    f"Failed to unpack {typ} instance. "
+                    "Note that using fields with `init=False` are not supported."
+                ) from e
+            else:
+                raise TypeError(
+                    f"Failed to unpack {typ} instance. "
+                    "Note that using a custom __init__ is not supported."
+                ) from e
         return (apply, typ, (), (dict, args)), collections
 
     if is_namedtuple_instance(expr):
@@ -517,9 +518,29 @@ def right(method):
     return partial(_swap, method)
 
 
+def _fuse_delayed(dsk, keys, **kwargs):
+    dependencies = dsk.get_all_dependencies()
+    dsk = ensure_dict(dsk)
+
+    fuse_subgraphs = config.get("optimization.fuse.subgraphs")
+    if fuse_subgraphs is None:
+        fuse_subgraphs = True
+    dsk, _ = fuse(
+        dsk,
+        keys,
+        dependencies=dependencies,
+        fuse_subgraphs=fuse_subgraphs,
+    )
+    return dsk
+
+
 def optimize(dsk, keys, **kwargs):
     if not isinstance(keys, (list, set)):
         keys = [keys]
+
+    if config.get("optimization.fuse.delayed"):
+        dsk = _fuse_delayed(dsk, keys, **kwargs)
+
     if not isinstance(dsk, HighLevelGraph):
         dsk = HighLevelGraph.from_collections(id(dsk), dsk, dependencies=())
     dsk = dsk.cull(set(flatten(keys)))

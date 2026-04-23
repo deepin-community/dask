@@ -11,7 +11,7 @@ from packaging.version import Version
 
 import dask
 import dask.dataframe as dd
-from dask.dataframe._compat import PANDAS_GE_200, PANDAS_GE_300, tm
+from dask.dataframe._compat import PANDAS_GE_300, tm
 from dask.dataframe.core import apply_and_enforce
 from dask.dataframe.utils import (
     UNKNOWN_CATEGORIES,
@@ -273,11 +273,7 @@ def test_meta_nonempty_index():
     idx = pd.Index([1], name="foo", dtype="int")
     res = meta_nonempty(idx)
     assert type(res) is type(idx)
-    if PANDAS_GE_200:
-        assert res.dtype == np.int_
-    else:
-        # before pandas 2.0, index dtypes were only x64
-        assert res.dtype == "int64"
+    assert res.dtype == np.int_
     assert res.name == idx.name
 
     idx = pd.Index(["a"], name="foo")
@@ -285,20 +281,20 @@ def test_meta_nonempty_index():
     assert type(res) is pd.Index
     assert res.name == idx.name
 
-    idx = pd.DatetimeIndex(["1970-01-01"], freq="d", tz="America/New_York", name="foo")
+    idx = pd.DatetimeIndex(["1970-01-01"], freq="D", tz="America/New_York", name="foo")
     res = meta_nonempty(idx)
     assert type(res) is pd.DatetimeIndex
     assert res.tz == idx.tz
     assert res.freq == idx.freq
     assert res.name == idx.name
 
-    idx = pd.PeriodIndex(["1970-01-01"], freq="d", name="foo")
+    idx = pd.PeriodIndex(["1970-01-01"], freq="D", name="foo")
     res = meta_nonempty(idx)
     assert type(res) is pd.PeriodIndex
     assert res.freq == idx.freq
     assert res.name == idx.name
 
-    idx = pd.TimedeltaIndex([pd.Timedelta(1, "D")], freq="d", name="foo")
+    idx = pd.TimedeltaIndex([pd.Timedelta(1, "D")], freq="D", name="foo")
     res = meta_nonempty(idx)
     assert type(res) is pd.TimedeltaIndex
     assert res.freq == idx.freq
@@ -414,10 +410,11 @@ def test_check_meta():
     # Series metadata error
     with pytest.raises(ValueError) as err:
         check_meta(d, meta.d.astype("f8"), numeric_equal=False)
+    series = "pandas.core.series.Series" if not PANDAS_GE_300 else "pandas.Series"
     assert str(err.value) == (
         "Metadata mismatch found.\n"
         "\n"
-        "Partition type: `pandas.core.series.Series`\n"
+        f"Partition type: `{series}`\n"
         "+----------+---------+\n"
         "|          | dtype   |\n"
         "+----------+---------+\n"
@@ -453,7 +450,7 @@ def test_check_meta():
     assert str(err.value) == (
         "Metadata mismatch found.\n"
         "\n"
-        "Partition type: `pandas.core.series.Series`\n"
+        f"Partition type: `{series}`\n"
         "+----------+--------+\n"
         "|          | dtype  |\n"
         "+----------+--------+\n"
@@ -467,7 +464,12 @@ def test_check_matching_columns_raises_appropriate_errors():
     df = pd.DataFrame(columns=["a", "b", "c"])
 
     meta = pd.DataFrame(columns=["b", "a", "c"])
-    with pytest.raises(ValueError, match="Order of columns does not match"):
+    with pytest.raises(
+        ValueError,
+        match="Order of columns does not match."
+        "\nActual:   \\['a', 'b', 'c'\\]"
+        "\nExpected: \\['b', 'a', 'c'\\]",
+    ):
         assert check_matching_columns(meta, df)
 
     meta = pd.DataFrame(columns=["a", "b", "c", "d"])
@@ -682,9 +684,9 @@ def test_pyarrow_strings_enabled():
     except ImportError:
         pa = None
 
-    # If `pandas>=2` and `pyarrow>=12` are installed, then default to using pyarrow strings
+    # If `pyarrow>=12` are installed, then default to using pyarrow strings
     if (
-        PANDAS_GE_200
+        dask.config.get("dataframe.convert-string") in (True, None)
         and pa is not None
         and Version(pa.__version__) >= Version("12.0.0")
     ):

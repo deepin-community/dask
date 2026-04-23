@@ -1,0 +1,32 @@
+From: Colin Watson <cjwatson@debian.org>
+Date: Tue, 4 Feb 2025 09:44:23 +0000
+Subject: Skip test_reductions_out[product] with numpy >= 2
+
+These tests have already been removed in the next upstream release, but
+that depends more heavily on pyarrow which isn't yet in Debian.
+
+Forwarded: not-needed
+Bug-Debian: https://bugs.debian.org/1095019
+Last-Update: 2025-02-04
+---
+ dask/dataframe/tests/test_arithmetics_reduction.py | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/dask/dataframe/tests/test_arithmetics_reduction.py b/dask/dataframe/tests/test_arithmetics_reduction.py
+index e21d3fb..d76d12d 100644
+--- a/dask/dataframe/tests/test_arithmetics_reduction.py
++++ b/dask/dataframe/tests/test_arithmetics_reduction.py
+@@ -860,6 +860,13 @@ def test_reductions_out(axis, redfunc):
+ 
+     out = dd.from_pandas(pd.Series([], dtype="float64"), 3)
+ 
++    if NUMPY_GE_200 and redfunc == "product":
++        with pytest.raises(
++            AttributeError, match="module 'numpy' has no attribute 'product'"
++        ):
++            np_redfunc = getattr(np, redfunc)
++        pytest.skip(reason="numpy>2 removed product -- users should move to prod")
++
+     np_redfunc = getattr(np, redfunc)
+     pd_redfunc = getattr(frame.__class__, redfunc)
+     dsk_redfunc = getattr(dsk_in.__class__, redfunc)

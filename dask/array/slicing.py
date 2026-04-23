@@ -11,7 +11,8 @@ from operator import itemgetter
 import numpy as np
 from tlz import concat, memoize, merge, pluck
 
-from dask import config, core, utils
+from dask import core
+from dask._task_spec import Alias, Task, TaskRef
 from dask.array.chunk import getitem
 from dask.base import is_dask_collection, tokenize
 from dask.highlevelgraph import HighLevelGraph
@@ -141,10 +142,8 @@ def slice_array(out_name, in_name, blockdims, index, itemsize):
     >>> dsk, blockdims = slice_array('y', 'x', [(20, 20, 20, 20, 20)],
     ...                              (slice(10, 35),), 8)
     >>> pprint(dsk)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    {('y', 0): (<function getitem at ...>,
-                ('x', 0),
-                (slice(10, 20, 1),)),
-     ('y', 1): (<function getitem at ...>, ('x', 1), (slice(0, 15, 1),))}
+    {('y', 0): <Task ('y', 0) getitem(Alias(('x', 0)), (slice(10, 20, 1),))>,
+     ('y', 1): <Task ('y', 1) getitem(Alias(('x', 1)), (slice(0, 15, 1),))>}
     >>> blockdims
     ((10, 15),)
 
@@ -164,7 +163,9 @@ def slice_array(out_name, in_name, blockdims, index, itemsize):
         isinstance(index, slice) and index == slice(None, None, None) for index in index
     ):
         suffixes = product(*[range(len(bd)) for bd in blockdims])
-        dsk = {(out_name,) + s: (in_name,) + s for s in suffixes}
+        dsk = {
+            (out_name,) + s: Alias((out_name,) + s, (in_name,) + s) for s in suffixes
+        }
         return dsk, blockdims
 
     # Add in missing colons at the end as needed.  x[5] -> x[5, :, :]
@@ -173,13 +174,13 @@ def slice_array(out_name, in_name, blockdims, index, itemsize):
     index += (slice(None, None, None),) * missing
 
     # Pass down to next function
-    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index)
 
     bd_out = tuple(map(tuple, bd_out))
     return dsk_out, bd_out
 
 
-def slice_with_newaxes(out_name, in_name, blockdims, index, itemsize):
+def slice_with_newaxes(out_name, in_name, blockdims, index):
     """
     Handle indexing with Nones
 
@@ -195,32 +196,32 @@ def slice_with_newaxes(out_name, in_name, blockdims, index, itemsize):
             where_none[i] -= n
 
     # Pass down and do work
-    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+    dsk, blockdims2 = slice_wrap_lists(
+        out_name, in_name, blockdims, index2, not where_none
+    )
 
     if where_none:
         expand = expander(where_none)
         expand_orig = expander(where_none_orig)
 
         # Insert ",0" into the key:  ('x', 2, 3) -> ('x', 0, 2, 0, 3)
-        dsk2 = {
-            (out_name,) + expand(k[1:], 0): (v[:2] + (expand_orig(v[2], None),))
-            for k, v in dsk.items()
-            if k[0] == out_name
-        }
-
-        # Add back intermediate parts of the dask that weren't the output
-        dsk3 = merge(dsk2, {k: v for k, v in dsk.items() if k[0] != out_name})
+        dsk2 = {}
+        for k, v in dsk.items():
+            if k[0] == out_name:
+                k2 = (out_name,) + expand(k[1:], 0)
+                dsk2[k2] = Task(k2, v.func, v.args[0], expand_orig(v.args[1], None))
+            else:
+                dsk2[k] = v
 
         # Insert (1,) into blockdims:  ((2, 2), (3, 3)) -> ((2, 2), (1,), (3, 3))
         blockdims3 = expand(blockdims2, (1,))
-
-        return dsk3, blockdims3
+        return dsk2, blockdims3
 
     else:
         return dsk, blockdims2
 
 
-def slice_wrap_lists(out_name, in_name, blockdims, index, itemsize):
+def slice_wrap_lists(out_name, in_name, blockdims, index, allow_getitem_optimization):
     """
     Fancy indexing along blocked array dasks
 
@@ -251,7 +252,9 @@ def slice_wrap_lists(out_name, in_name, blockdims, index, itemsize):
 
     # No lists, hooray! just use slice_slices_and_integers
     if not where_list:
-        return slice_slices_and_integers(out_name, in_name, blockdims, index)
+        return slice_slices_and_integers(
+            out_name, in_name, blockdims, index, allow_getitem_optimization
+        )
 
     # Replace all lists with full slices  [3, 1, 0] -> slice(None, None, None)
     index_without_list = tuple(
@@ -262,14 +265,18 @@ def slice_wrap_lists(out_name, in_name, blockdims, index, itemsize):
     if all(is_arraylike(i) or i == slice(None, None, None) for i in index):
         axis = where_list[0]
         blockdims2, dsk3 = take(
-            out_name, in_name, blockdims, index[where_list[0]], itemsize, axis=axis
+            out_name, in_name, blockdims, index[where_list[0]], axis=axis
         )
     # Mixed case. Both slices/integers and lists. slice/integer then take
     else:
         # Do first pass without lists
         tmp = "slice-" + tokenize((out_name, in_name, blockdims, index))
         dsk, blockdims2 = slice_slices_and_integers(
-            tmp, in_name, blockdims, index_without_list
+            tmp,
+            in_name,
+            blockdims,
+            index_without_list,
+            allow_getitem_optimization=False,
         )
 
         # After collapsing some axes due to int indices, adjust axis parameter
@@ -279,13 +286,15 @@ def slice_wrap_lists(out_name, in_name, blockdims, index, itemsize):
         )
 
         # Do work
-        blockdims2, dsk2 = take(out_name, tmp, blockdims2, index[axis], 8, axis=axis2)
+        blockdims2, dsk2 = take(out_name, tmp, blockdims2, index[axis], axis=axis2)
         dsk3 = merge(dsk, dsk2)
 
     return dsk3, blockdims2
 
 
-def slice_slices_and_integers(out_name, in_name, blockdims, index):
+def slice_slices_and_integers(
+    out_name, in_name, blockdims, index, allow_getitem_optimization=False
+):
     """
     Dask array indexing with slices and integers
 
@@ -329,7 +338,12 @@ def slice_slices_and_integers(out_name, in_name, blockdims, index):
     all_slices = list(product(*[pluck(1, s) for s in sorted_block_slices]))
 
     dsk_out = {
-        out_name: (getitem, in_name, slices)
+        out_name: (
+            Task(out_name, getitem, TaskRef(in_name), slices)
+            if not allow_getitem_optimization
+            or not all(sl == slice(None, None, None) for sl in slices)
+            else Alias(out_name, in_name)
+        )
         for out_name, in_name, slices in zip(out_names, in_names, all_slices)
     }
 
@@ -531,65 +545,16 @@ def issorted(seq):
     """Is sequence sorted?
 
     >>> issorted([1, 2, 3])
-    True
+    np.True_
     >>> issorted([3, 1, 2])
-    False
+    np.False_
     """
     if len(seq) == 0:
         return True
     return np.all(seq[:-1] <= seq[1:])
 
 
-def slicing_plan(chunks, index):
-    """Construct a plan to slice chunks with the given index
-
-    Parameters
-    ----------
-    chunks : Tuple[int]
-        One dimensions worth of chunking information
-    index : np.ndarray[int]
-        The index passed to slice on that dimension
-
-    Returns
-    -------
-    out : List[Tuple[int, np.ndarray]]
-        A list of chunk/sub-index pairs corresponding to each output chunk
-    """
-    from dask.array.utils import asarray_safe
-
-    if not is_arraylike(index):
-        index = np.asanyarray(index)
-
-    cum_chunks_tup = cached_cumsum(chunks)
-    cum_chunks = asarray_safe(cum_chunks_tup, like=index)
-    if cum_chunks.dtype.kind != "f":  # Don't cast NaN chunks to int
-        # This is important when index.dtype=uint64 (or uint32 on 32-bit hosts) to
-        # prevent accidental automatic casting during `index - cum_chunks` below
-        cum_chunks = cum_chunks.astype(index.dtype)
-
-    # this dispactches to the array library
-    chunk_locations = np.searchsorted(cum_chunks, index, side="right")
-
-    # but we need chunk_locations as python ints for getitem calls downstream
-    chunk_locations = chunk_locations.tolist()
-    where = np.where(np.diff(chunk_locations))[0] + 1
-
-    extra = asarray_safe([0], like=where)
-    c_loc = asarray_safe([len(chunk_locations)], like=where)
-    where = np.concatenate([extra, where, c_loc])
-
-    out = []
-    for i in range(len(where) - 1):
-        sub_index = index[where[i] : where[i + 1]]
-        chunk = chunk_locations[where[i]]
-        if chunk > 0:
-            sub_index = sub_index - cum_chunks[chunk - 1]
-        out.append((chunk, sub_index))
-
-    return out
-
-
-def take(outname, inname, chunks, index, itemsize, axis=0):
+def take(outname, inname, chunks, index, axis=0):
     """Index array with an iterable of index
 
     Handles a single index by a single list
@@ -597,115 +562,67 @@ def take(outname, inname, chunks, index, itemsize, axis=0):
     Mimics ``np.take``
 
     >>> from pprint import pprint
-    >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+    >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], axis=0)
     >>> chunks
-    ((2, 1, 1),)
-    >>> pprint(dsk)   # doctest: +ELLIPSIS
-    {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
-     ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
-     ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    ((4,),)
 
-    When list is sorted we retain original block structure
+    When list is sorted we still try to preserve properly sized chunks.
 
-    >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+    >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], axis=0)
     >>> chunks
-    ((3, 1),)
-    >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    {('y', 0): (<function getitem at ...>,
-                ('x', 0),
-                (array([1, 3, 5]),)),
-     ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    ((4,),)
 
     When any indexed blocks would otherwise grow larger than
-    dask.config.array.chunk-size, we might split them,
-    depending on the value of ``dask.config.slicing.split-large-chunks``.
-
-    >>> import dask
-    >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
-    ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (2000, 2000), (2000, 2000)],
-    ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
-    >>> chunks
-    ((1, 3, 3, 1), (2000, 2000), (2000, 2000))
+    dask.config.array.chunk-size, we will split them to avoid
+    growing chunksizes.
     """
-    from dask.array.core import PerformanceWarning
 
-    plan = slicing_plan(chunks[axis], index)
-    if len(plan) >= len(chunks[axis]) * 10:
-        factor = math.ceil(len(plan) / len(chunks[axis]))
+    if not np.isnan(chunks[axis]).any():
+        from dask.array._shuffle import _shuffle
+        from dask.array.utils import arange_safe, asarray_safe
 
-        warnings.warn(
-            "Slicing with an out-of-order index is generating %d "
-            "times more chunks" % factor,
-            PerformanceWarning,
-            stacklevel=6,
+        arange = arange_safe(np.sum(chunks[axis]), like=index)
+        if len(index) == len(arange) and np.abs(index - arange).sum() == 0:
+            # TODO: This should be a real no-op, but the call stack is
+            # too deep to do this efficiently for now
+            chunk_tuples = list(product(*(range(len(c)) for i, c in enumerate(chunks))))
+            graph = {
+                (outname,) + c: Alias((outname,) + c, (inname,) + c)
+                for c in chunk_tuples
+            }
+            return tuple(chunks), graph
+
+        average_chunk_size = int(sum(chunks[axis]) / len(chunks[axis]))
+
+        indexer = []
+        index = asarray_safe(index, like=index)
+        for i in range(0, len(index), average_chunk_size):
+            indexer.append(index[i : i + average_chunk_size].tolist())
+
+        token = (
+            outname.split("-")[-1]
+            if "-" in outname
+            else tokenize(outname, chunks, index, axis)
         )
-
-    # Check for chunks from the plan that would violate the user's
-    # configured chunk size.
-    nbytes = utils.parse_bytes(config.get("array.chunk-size"))
-    other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
-    other_numel = math.prod(max(x) for x in other_chunks)
-
-    if math.isnan(other_numel) or other_numel == 0:
-        warnsize = maxsize = math.inf
+        chunks, graph = _shuffle(chunks, indexer, axis, inname, outname, token)
+        return chunks, graph
+    elif len(chunks[axis]) == 1:
+        slices = [slice(None)] * len(chunks)
+        slices[axis] = list(index)
+        slices = tuple(slices)
+        chunk_tuples = list(product(*(range(len(c)) for i, c in enumerate(chunks))))
+        dsk = {
+            (outname,)
+            + ct: Task((outname,) + ct, getitem, TaskRef((inname,) + ct), slices)
+            for ct in chunk_tuples
+        }
+        return chunks, dsk
     else:
-        maxsize = math.ceil(nbytes / (other_numel * itemsize))
-        warnsize = maxsize * 5
+        from dask.array.core import unknown_chunk_message
 
-    split = config.get("array.slicing.split-large-chunks", None)
-
-    # Warn only when the default is not specified.
-    warned = split is not None
-
-    for _, index_list in plan:
-        if not warned and len(index_list) > warnsize:
-            msg = (
-                "Slicing is producing a large chunk. To accept the large\n"
-                "chunk and silence this warning, set the option\n"
-                "    >>> with dask.config.set(**{'array.slicing.split_large_chunks': False}):\n"
-                "    ...     array[indexer]\n\n"
-                "To avoid creating the large chunks, set the option\n"
-                "    >>> with dask.config.set(**{'array.slicing.split_large_chunks': True}):\n"
-                "    ...     array[indexer]"
-            )
-            warnings.warn(msg, PerformanceWarning, stacklevel=6)
-            warned = True
-
-    where_index = []
-    index_lists = []
-    for where_idx, index_list in plan:
-        index_length = len(index_list)
-        if split and index_length > maxsize:
-            index_sublist = np.array_split(
-                index_list, math.ceil(index_length / maxsize)
-            )
-            index_lists.extend(index_sublist)
-            where_index.extend([where_idx] * len(index_sublist))
-        else:
-            if not is_arraylike(index_list):
-                index_list = np.array(index_list)
-            index_lists.append(index_list)
-            where_index.append(where_idx)
-
-    dims = [range(len(bd)) for bd in chunks]
-
-    indims = list(dims)
-    indims[axis] = list(range(len(where_index)))
-    keys = list(product([outname], *indims))
-
-    outdims = list(dims)
-    outdims[axis] = where_index
-    slices = [[colon] * len(bd) for bd in chunks]
-    slices[axis] = index_lists
-    slices = list(product(*slices))
-    inkeys = list(product([inname], *outdims))
-    values = [(getitem, inkey, slc) for inkey, slc in zip(inkeys, slices)]
-
-    chunks2 = list(chunks)
-    chunks2[axis] = tuple(map(len, index_lists))
-    dsk = dict(zip(keys, values))
-
-    return tuple(chunks2), dsk
+        raise ValueError(
+            f"Array chunk size or shape is unknown. {unknown_chunk_message}"
+        )
 
 
 def posify_index(shape, ind):

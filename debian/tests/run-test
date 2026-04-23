@@ -8,6 +8,11 @@ SKIP_TESTS=test_development_guidelines_matches_ci
 SKIP_TESTS="$SKIP_TESTS or test_RandomState_only_funcs"
 # See https://github.com/dask/dask/issues/10418
 SKIP_TESTS="$SKIP_TESTS or test_division_or_partition"
+# Requires unpackaged pyarrow
+SKIP_TESTS="$SKIP_TESTS or test_parquet_botocore_exception"
+SKIP_TESTS="$SKIP_TESTS or test_quantile_arrow_dtype"
+SKIP_TESTS="$SKIP_TESTS or test_tokenize_pandas_arrow_strings"
+SKIP_TESTS="$SKIP_TESTS or test_with_spec_pyarrow"
 
 cp conftest.py "$AUTOPKGTEST_TMP"
 for py in $(py3versions --supported)

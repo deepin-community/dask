@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import pytest
 
+from dask.array import from_array
+from dask.base import collections_to_dsk
+
 pytest.importorskip("numpy")
 
 import numpy as np
@@ -17,6 +20,7 @@ from dask.array.overlap import (
     overlap,
     overlap_internal,
     periodic,
+    push,
     reflect,
     trim_internal,
 )
@@ -121,7 +125,7 @@ def test_overlap_internal_asymmetric_small():
 def test_trim_internal():
     d = da.ones((40, 60), chunks=(10, 10))
     e = trim_internal(d, axes={0: 1, 1: 2}, boundary="reflect")
-
+    assert len(collections_to_dsk([e])) == 24
     assert e.chunks == ((8, 8, 8, 8), (6, 6, 6, 6, 6, 6))
 
 
@@ -563,6 +567,18 @@ def test_map_overlap_deprecated_signature():
         assert y.shape == (3,)
 
 
+def test_map_overlap_trim_false_chunking():
+    a = np.arange(100)
+    c = da.from_array(a, chunks=15)
+
+    def f(x):
+        return x[20:-20]
+
+    d = da.map_overlap(f, c, depth={0: 20}, boundary=0, trim=False)
+    print(d.shape)
+    print(d.compute().shape)
+
+
 def test_nearest_overlap():
     a = np.arange(144).reshape(12, 12).astype(float)
 
@@ -696,17 +712,17 @@ def test_overlap_few_dimensions_small():
     a = x.map_overlap(lambda x: x, depth={0: 1}, boundary="none")
     assert_eq(x, a)
     assert any(isinstance(k[1], float) for k in a.dask)
-    assert all(isinstance(k[2], int) for k in a.dask)
+    assert all(isinstance(k[2], int) for k in a.dask if "_overlap_trim_info" not in k)
 
     b = x.map_overlap(lambda x: x, depth={1: 1}, boundary="none")
     assert_eq(x, b)
-    assert all(isinstance(k[1], int) for k in b.dask)
-    assert any(isinstance(k[2], float) for k in b.dask)
+    assert all(isinstance(k[1], int) for k in b.dask if "_overlap_trim_info" not in k)
+    assert any(isinstance(k[2], float) for k in b.dask if "_overlap_trim_info" not in k)
 
     c = x.map_overlap(lambda x: x, depth={0: 1, 1: 1}, boundary="none")
     assert_eq(x, c)
-    assert any(isinstance(k[1], float) for k in c.dask)
-    assert any(isinstance(k[2], float) for k in c.dask)
+    assert any(isinstance(k[1], float) for k in c.dask if "_overlap_trim_info" not in k)
+    assert any(isinstance(k[2], float) for k in c.dask if "_overlap_trim_info" not in k)
 
 
 def test_overlap_few_dimensions():
@@ -720,6 +736,22 @@ def test_overlap_few_dimensions():
     assert len(a.dask) < len(c.dask)
 
     assert len(c.dask) < 10 * len(a.dask)
+
+
+def test_push():
+    bottleneck = pytest.importorskip("bottleneck")
+
+    array = np.array([np.nan, 1, 2, 3, np.nan, np.nan, np.nan, np.nan, 4, 5, np.nan, 6])
+
+    for n in [None, 1, 2, 3, 4, 5, 11]:
+        expected = bottleneck.push(array, axis=0, n=n)
+        for c in range(1, 11):
+            actual = push(from_array(array, chunks=c), axis=0, n=n)
+            np.testing.assert_equal(actual, expected)
+
+        # some chunks of size-1 with NaN
+        actual = push(from_array(array, chunks=(1, 2, 3, 2, 2, 1, 1)), axis=0, n=n)
+        np.testing.assert_equal(actual, expected)
 
 
 @pytest.mark.parametrize("boundary", ["reflect", "periodic", "nearest", "none"])
@@ -826,3 +858,107 @@ def test_sliding_window_errors(window_shape, axis):
     arr = da.zeros((4, 3))
     with pytest.raises(ValueError):
         sliding_window_view(arr, window_shape, axis)
+
+
+@pytest.mark.parametrize(
+    "output_chunks, window_shape, axis",
+    [
+        (((25, 21), (9, 8, 8, 9, 8, 8), (9, 8, 8, 9, 8, 8), (5,)), 5, 0),
+        (((25, 6), (5,) * 10, (5,) * 10, (20,)), 20, 0),
+        (
+            (
+                (11,),
+                (3, 3, 3, 3, 3, 3, 3, 2, 2) * 2,
+                (3, 3, 3, 3, 3, 3, 3, 2, 2) * 2,
+                (40,),
+            ),
+            40,
+            0,
+        ),
+        (
+            (
+                (25, 21),
+                (2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1) * 2,
+                (25, 22),
+                (5,),
+                (4,),
+            ),
+            (5, 4),
+            (0, 2),
+        ),
+        (
+            (
+                (25, 21),
+                (25, 22),
+                (2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1) * 2,
+                (5,),
+                (4,),
+            ),
+            (5, 4),
+            (0, 1),
+        ),
+    ],
+)
+def test_sliding_window_view_chunking(output_chunks, window_shape, axis):
+    arr = np.random.randn(50, 50, 50)
+    darr = da.from_array(arr, chunks=(25, 25, 25))
+    result = sliding_window_view(darr, window_shape, axis, automatic_rechunk=True)
+    assert result.chunks == output_chunks
+    expected = np.lib.stride_tricks.sliding_window_view(arr, window_shape, axis)
+    assert_eq(result, expected)
+
+
+def test_sliding_window_view_no_chunking():
+    arr = np.random.randn(50, 50, 50)
+    darr = da.from_array(arr, chunks=(25, 25, 25))
+    result = sliding_window_view(darr, 30, 0, automatic_rechunk=False)
+    assert result.chunks == ((21,), (25, 25), (25, 25), (30,))
+    expected = np.lib.stride_tricks.sliding_window_view(arr, 30, 0)
+    assert_eq(result, expected)
+
+
+def test_overlap_not_adding_empty_tasks():
+    arr = da.zeros((30, 5), chunks=(10, 5))
+
+    def dummy(x):
+        return x
+
+    result = arr.map_overlap(dummy, depth={0: (0, 1)})
+    dsk = dict(result.dask)
+
+    def check(v):
+        return (
+            isinstance(v, tuple)
+            and len(v) >= 3
+            and isinstance(v[2], tuple)
+            and v[2] == (slice(0, 0, None), slice(None))
+        )
+
+    assert not any(check(v) for v in dsk.values())
+    result.compute()
+
+
+def test_map_overlap_new_axis():
+    arr = da.arange(6, chunks=2)
+    assert arr.shape == (6,)
+    assert arr.chunks == ((2, 2, 2),)
+
+    actual = arr.map_overlap(lambda x: np.stack([x, x + 0.5]), depth=1, new_axis=[0])
+    expected = np.stack([np.arange(6), np.arange(6) + 0.5])
+
+    assert actual.chunks == ((1,), (2, 2, 2))
+    # Shape and chunks aren't known until array is computed,
+    # so don't expclitly check shape or chunks in assert_eq
+    assert_eq(expected, actual, check_shape=False, check_chunks=False)
+
+
+def test_overlap_not_blowing_up_graph():
+    xr = pytest.importorskip("xarray")
+
+    arr = xr.DataArray(
+        da.random.random((2, 10, 5, 121), chunks=(1, 2, 1, 121)),
+        dims=["x", "y", "z", "year"],
+    )
+    result = arr.rolling(dim={"year": 11}, center=True).construct("window_dim")
+    dc = collections_to_dsk([result.data])
+    assert len(dc) <= 1651  # previously 3000

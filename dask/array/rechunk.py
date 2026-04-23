@@ -5,6 +5,7 @@ The rechunk module defines:
     rechunk: a function to convert the blocks
         of an existing dask array to new chunks or blockshape
 """
+
 from __future__ import annotations
 
 import heapq
@@ -19,6 +20,7 @@ import tlz as toolz
 from tlz import accumulate
 
 from dask import config
+from dask._task_spec import Alias, Task, TaskRef, parse_input
 from dask.array.chunk import getitem
 from dask.array.core import Array, concatenate3, normalize_chunks
 from dask.array.utils import validate_axis
@@ -361,7 +363,8 @@ def rechunk(
 
     _validate_rechunk(x.chunks, chunks)
 
-    method = method or config.get("array.rechunk.method")
+    if method is None:
+        method = _choose_rechunk_method(x.chunks, chunks, threshold=threshold)
 
     if method == "tasks":
         steps = plan_rechunk(
@@ -375,10 +378,33 @@ def rechunk(
     elif method == "p2p":
         from distributed.shuffle import rechunk_p2p
 
-        return rechunk_p2p(x, chunks)
+        return rechunk_p2p(
+            x,
+            chunks,
+            threshold=threshold,
+            block_size_limit=block_size_limit,
+            balance=balance,
+        )
 
     else:
         raise NotImplementedError(f"Unknown rechunking method '{method}'")
+
+
+def _choose_rechunk_method(old_chunks, new_chunks, threshold=None):
+    if method := config.get("array.rechunk.method", None):
+        return method
+    try:
+        from distributed import default_client
+
+        default_client()
+    except (ImportError, ValueError):
+        return "tasks"
+
+    _old_to_new = old_to_new(old_chunks, new_chunks)
+    graph_size = math.prod(sum(len(ins) for ins in axis) for axis in _old_to_new)
+    threshold = threshold or config.get("array.rechunk.threshold")
+    graph_size_threshold = _graph_size_threshold(old_chunks, new_chunks, threshold)
+    return "tasks" if graph_size < graph_size_threshold else "p2p"
 
 
 def _number_of_blocks(chunks):
@@ -615,9 +641,7 @@ def plan_rechunk(
     block_size_limit = max([block_size_limit, largest_old_block, largest_new_block])
 
     # The graph size above which to optimize
-    graph_size_threshold = threshold * (
-        _number_of_blocks(old_chunks) + _number_of_blocks(new_chunks)
-    )
+    graph_size_threshold = _graph_size_threshold(old_chunks, new_chunks, threshold)
 
     current_chunks = old_chunks
     first_pass = True
@@ -652,6 +676,10 @@ def plan_rechunk(
         first_pass = False
 
     return steps + [new_chunks]
+
+
+def _graph_size_threshold(old_chunks, new_chunks, threshold):
+    return threshold * (_number_of_blocks(old_chunks) + _number_of_blocks(new_chunks))
 
 
 def _compute_rechunk(x, chunks):
@@ -695,18 +723,20 @@ def _compute_rechunk(x, chunks):
                 slc.start == 0 and slc.stop == x.chunks[i][ind]
                 for i, (slc, ind) in enumerate(zip(slices, old_index))
             ):
-                rec_cat_arg_flat[rec_cat_index] = old_blocks[old_block_index]
+                rec_cat_arg_flat[rec_cat_index] = TaskRef(old_blocks[old_block_index])
             else:
-                intermediates[name] = (getitem, old_blocks[old_block_index], slices)
-                rec_cat_arg_flat[rec_cat_index] = name
+                intermediates[name] = Task(
+                    name, getitem, TaskRef(old_blocks[old_block_index]), slices
+                )
+                rec_cat_arg_flat[rec_cat_index] = TaskRef(name)
 
         assert rec_cat_index == rec_cat_arg.size - 1
 
         # New block is formed by concatenation of sliced old blocks
         if all(d == 1 for d in rec_cat_arg.shape):
-            x2[key] = rec_cat_arg.flat[0]
+            x2[key] = Alias(key, rec_cat_arg.flat[0])
         else:
-            x2[key] = (concatenate3, rec_cat_arg.tolist())
+            x2[key] = Task(key, concatenate3, parse_input(rec_cat_arg.tolist()))
 
     del old_blocks, new_index
 

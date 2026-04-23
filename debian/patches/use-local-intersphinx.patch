@@ -5,12 +5,12 @@ Subject: Use local intersphinx references,
 
 Forwarded: No
 ---
- docs/source/conf.py | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ docs/source/conf.py | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
 
 --- a/docs/source/conf.py
 +++ b/docs/source/conf.py
-@@ -327,29 +327,30 @@
+@@ -330,29 +330,30 @@
  #  --Options for sphinx extensions -----------------------------------------------
  
  intersphinx_mapping = {

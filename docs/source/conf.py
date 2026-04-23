@@ -154,6 +154,8 @@ html_theme_options = {"logo_only": True}
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
+html_js_files = ["custom.js"]
+
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
 # html_last_updated_fmt = '%b %d, %Y'
@@ -317,9 +319,10 @@ epub_copyright = "2014-2018, Anaconda, Inc. and contributors"
 # epub_tocdup = True
 
 extlinks = {
-    "issue": ("https://github.com/dask/dask/issues/%s", "GH#"),
-    "pr": ("https://github.com/dask/dask/pull/%s", "GH#"),
-    "pr-distributed": ("https://github.com/dask/distributed/pull/%s", "GH#"),
+    "issue": ("https://github.com/dask/dask/issues/%s", "dask#"),
+    "pr": ("https://github.com/dask/dask/pull/%s", "dask#"),
+    "pr-distributed": ("https://github.com/dask/distributed/pull/%s", "distributed#"),
+    "pr-expr": ("https://github.com/dask/dask-expr/pull/%s", "dask-expr#"),
 }
 
 #  --Options for sphinx extensions -----------------------------------------------
